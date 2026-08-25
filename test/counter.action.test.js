@@ -23,16 +23,15 @@ test('ignores other actionIds', async () => {
   assert.equal(client.calls.setTitle.length, 0);
 });
 
-test('long press resets', async () => {
+test('long press resets via hold timer', async () => {
   const client = makeFakeClient();
   registerCounter(client);
   const ctx = { actionId: 'counter', bindingInstanceId: 'b1' };
   await client.emit('action.keyDown', { context: ctx });
-  await client.emit('action.keyDown', { context: ctx });
-  assert.equal(client.calls.setTitle.at(-1)[1], '2');
-  await new Promise((r) => setTimeout(r, 750));
-  await client.emit('action.keyUp', { context: ctx });
+  assert.equal(client.calls.setTitle.at(-1)[1], '1');
+  await new Promise((r) => setTimeout(r, 800));
   assert.equal(client.calls.setTitle.at(-1)[1], '0');
+  await client.emit('action.keyUp', { context: ctx });
   await client.emit('action.willDisappear', { context: ctx });
 });
 
@@ -42,6 +41,8 @@ test('quick tap does not reset', async () => {
   const ctx = { actionId: 'counter', bindingInstanceId: 'b1' };
   await client.emit('action.keyDown', { context: ctx });
   await client.emit('action.keyUp', { context: ctx });
+  await new Promise((r) => setTimeout(r, 800));
+  assert.equal(client.calls.setTitle.at(-1)[1], '1');
   await client.emit('action.keyDown', { context: ctx });
   assert.equal(client.calls.setTitle.at(-1)[1], '2');
   await client.emit('action.willDisappear', { context: ctx });

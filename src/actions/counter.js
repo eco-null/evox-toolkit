@@ -1,8 +1,10 @@
 import { forAction, timedTask } from '../util.js';
 
+const LONG_PRESS_MS = 700;
+
 export function registerCounter(client) {
   const counts = new Map();
-  const pressedAt = new Map();
+  const holdTimers = new Map();
   const loops = new Map();
 
   const stopLoop = (id) => {
@@ -20,23 +22,30 @@ export function registerCounter(client) {
     loops.set(id, loop);
   };
 
+  const cancelHold = (id) => {
+    const t = holdTimers.get(id);
+    if (t) { clearTimeout(t); holdTimers.delete(id); }
+  };
+
   const onDown = forAction('counter')(async (event) => {
     const id = event.context.bindingInstanceId;
-    pressedAt.set(id, Date.now());
+    cancelHold(id);
     const n = Math.min((counts.get(id) ?? 0) + 1, 9999);
     counts.set(id, n);
     await client.setTitle(id, String(n));
+    const hold = setTimeout(() => {
+      if (counts.get(id) !== null) {
+        counts.set(id, 0);
+        client.setTitle(id, '0').catch(() => {});
+      }
+      holdTimers.delete(id);
+    }, LONG_PRESS_MS);
+    holdTimers.set(id, hold);
     startLoop(id);
   });
 
-  const onUp = forAction('counter')(async (event) => {
-    const id = event.context.bindingInstanceId;
-    const t0 = pressedAt.get(id);
-    pressedAt.delete(id);
-    if (t0 != null && Date.now() - t0 > 700) {
-      counts.set(id, 0);
-      await client.setTitle(id, '0');
-    }
+  const onUp = forAction('counter')((event) => {
+    cancelHold(event.context.bindingInstanceId);
   });
 
   const onAppear = forAction('counter')(async (event) => {
@@ -47,8 +56,9 @@ export function registerCounter(client) {
   });
 
   const onGone = forAction('counter')((event) => {
-    stopLoop(event.context.bindingInstanceId);
-    pressedAt.delete(event.context.bindingInstanceId);
+    const id = event.context.bindingInstanceId;
+    stopLoop(id);
+    cancelHold(id);
   });
 
   client.on('action.keyDown', onDown);

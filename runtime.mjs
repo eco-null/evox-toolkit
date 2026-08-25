@@ -6,7 +6,6 @@ import { registerSysmon } from './src/actions/sysmon.js';
 import { registerHotkey } from './src/actions/hotkey.js';
 import { registerClipboard } from './src/actions/clipboard.js';
 import { registerOpenUrl } from './src/actions/openurl.js';
-import { registerSpotify } from './src/actions/spotify.js';
 
 const client = new EvoxPluginClient(createNodeProcessIpcPluginTransport(), {
   sdkVersion: '0.1.0',
@@ -19,7 +18,6 @@ registerSysmon(client);
 registerHotkey(client);
 registerClipboard(client);
 registerOpenUrl(client);
-registerSpotify(client);
 
 let stopped = false;
 client.on('plugin.stop', async () => {

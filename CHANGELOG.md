@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.4.0 — 2026-08-25
+
+- **Hava**: yenileme ayarı (`interval`, dakika, varsayılan 30) + kendi kendine güncelleme döngüsü (5 sn'de ekranı tazeler; veriyi aradaki sürede yeniden çekmez). Tuşa basınca kaybolma giderildi.
+- **Sayaç**: uzun bas sıfırlama artık host `keyUp`'a bağlı değil — basılı tutulduğu sürece domlayan timer ile çalışır (700 ms).
+- **RAM**: "toplam" yazısı silindi; `12.9GB` / `32GB` iki satır.
+- **Disk Seç**: sürücü seçilmezse `C` varsayılır; seçilen harf dışındaki sürücüler gösterilmez.
+- **Spotify tamamen kaldırıldı**: `spotify` ve `spotify-volume` aksiyonları, modüller ve testler projeden çıkarıldı.
+- **Hotkey**: aksiyon id `hotkey` → `send-hotkey` (host'un yerleşik "Kısayol" aksiyonuyla çakışmayı önler); manuel metin alanı (`combo`) aynı şemada.
+
 ## v1.3.0 — 2026-08-25
 
 - **Sayaç**: sayı artık kalıcı — tuş her zaman sayıyı gösterir (canlı tutma döngüsü; showSuccess kaldırıldı — sayının kaybolmasına neden oluyordu); `willAppear`'da son sayı geri yüklenir.

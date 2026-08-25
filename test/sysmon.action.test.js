@@ -29,7 +29,7 @@ test('layoutGpuPanel fallback', () => {
 test('layoutRamPanel used over total two lines', () => {
   assert.deepEqual(layoutRamPanel({ used: 12.9 * 1024 ** 3, total: 32 * 1024 ** 3 }), [
     { text: '12.9GB', color: '#9adcff', size: 34 },
-    { text: 'toplam 32GB', size: 20 },
+    { text: '32GB', size: 26 },
   ]);
 });
 
@@ -94,3 +94,4 @@ test('parseLhm extracts amdcpu tctl and nvidia gpu', () => {
   assert.equal(out.gpuTemp, 60);
   assert.equal(out.gpuUtil, 7);
 });
+

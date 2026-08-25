@@ -3,7 +3,7 @@
   "pluginId": "01508eca-7af1-4dbf-8869-226e4cec4896",
   "sdkVersion": "0.1.0",
   "name": "evoX Toolkit",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "runtime": { "kind": "trusted-node", "entry": "runtime.mjs" },
   "hostCompatibility": { "minimumVersion": "0.2.0" },
   "permissions": [{ "name": "key.display" }],
@@ -11,7 +11,9 @@
   "actions": [
     { "id": "counter", "name": "Sayaç", "controllers": ["Keypad"], "supportedInMultiActions": false, "settingsSchema": [] },
     { "id": "weather", "name": "Hava", "controllers": ["Keypad"], "supportedInMultiActions": false,
-      "settingsSchema": [{ "key": "city", "type": "text", "label": "Şehir", "required": true }] },
+      "settingsSchema": [
+        { "key": "city", "type": "text", "label": "Şehir", "required": true },
+        { "key": "interval", "type": "number", "label": "Yenileme (dk)", "default": 30 }] },
     { "id": "sys-cpu", "name": "CPU", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [
         { "key": "interval", "type": "number", "label": "Güncelleme (sn)", "default": 3 },
@@ -26,7 +28,7 @@
       "settingsSchema": [
         { "key": "drive", "type": "text", "label": "Sürücü harfi (ör. C)", "default": "C" },
         { "key": "interval", "type": "number", "label": "Güncelleme (sn)", "default": 3 }] },
-    { "id": "hotkey", "name": "Hotkey", "controllers": ["Keypad"], "supportedInMultiActions": false,
+    { "id": "send-hotkey", "name": "Hotkey", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [
         { "key": "combo", "type": "text", "label": "Kısayol (ör. Ctrl+Shift+D)", "default": "" }] },
     { "id": "type-text", "name": "Metin Yaz", "controllers": ["Keypad"], "supportedInMultiActions": false,
@@ -39,25 +41,6 @@
           "options": [{ "value": "copy", "label": "Kopyala" }, { "value": "paste", "label": "Yapıştır" }] },
         { "key": "preview", "type": "toggle", "label": "Önizleme", "default": true }] },
     { "id": "open-url", "name": "URL Aç", "controllers": ["Keypad"], "supportedInMultiActions": false,
-      "settingsSchema": [{ "key": "url", "type": "url", "label": "Adres", "required": true }] },
-    { "id": "spotify", "name": "Spotify", "controllers": ["Keypad"], "supportedInMultiActions": false,
-      "settingsSchema": [
-        { "key": "clientId", "type": "text", "label": "Spotify Client ID" },
-        { "key": "clientSecret", "type": "text", "label": "Spotify Client Secret" },
-        { "key": "refreshToken", "type": "text", "label": "Spotify Refresh Token" },
-        { "key": "accessToken", "type": "text", "label": "Spotify Access Token (taze, opsiyonel)" },
-        { "key": "mode", "type": "select", "label": "Mod", "default": "toggle-play",
-          "options": [
-            { "value": "toggle-play", "label": "Çal/Durdur" },
-            { "value": "next", "label": "Sonraki" },
-            { "value": "prev", "label": "Önceki" },
-            { "value": "like", "label": "Beğen" },
-            { "value": "mute", "label": "Sessiz" }] }] },
-    { "id": "spotify-volume", "name": "Spotify Ses", "controllers": ["Knob", "Keypad"], "supportedInMultiActions": false,
-      "settingsSchema": [
-        { "key": "clientId", "type": "text", "label": "Spotify Client ID" },
-        { "key": "clientSecret", "type": "text", "label": "Spotify Client Secret" },
-        { "key": "refreshToken", "type": "text", "label": "Spotify Refresh Token" },
-        { "key": "accessToken", "type": "text", "label": "Spotify Access Token (taze, opsiyonel)" }] }
+      "settingsSchema": [{ "key": "url", "type": "url", "label": "Adres", "required": true }] }
   ]
 }

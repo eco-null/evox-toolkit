@@ -8,7 +8,7 @@ test('hotkey manual combo sends combo and shows success', async () => {
   client.getSettings = async () => ({ combo: 'Ctrl+Shift+D' });
   const sent = [];
   registerHotkey(client, { win: { sendCombo: async (c) => { sent.push(c); return true; }, typeText: async () => true } });
-  await client.emit('action.keyDown', { context: { actionId: 'hotkey', bindingInstanceId: 'b1' } });
+  await client.emit('action.keyDown', { context: { actionId: 'send-hotkey', bindingInstanceId: 'b1' } });
   assert.deepEqual(sent, ['Ctrl+Shift+D']);
   assert.equal(client.calls.showSuccess.length, 1);
 });
@@ -18,7 +18,7 @@ test('hotkey reads combo from alternative key names', async () => {
   client.getSettings = async () => ({ value: 'Alt+Tab' });
   const sent = [];
   registerHotkey(client, { win: { sendCombo: async (c) => { sent.push(c); return true; }, typeText: async () => true } });
-  await client.emit('action.keyDown', { context: { actionId: 'hotkey', bindingInstanceId: 'b1' } });
+  await client.emit('action.keyDown', { context: { actionId: 'send-hotkey', bindingInstanceId: 'b1' } });
   assert.deepEqual(sent, ['Alt+Tab']);
 });
 
@@ -27,7 +27,7 @@ test('hotkey falls back to legacy preset/combo field', async () => {
   client.getSettings = async () => ({ preset: 'Win+V' });
   const sent = [];
   registerHotkey(client, { win: { sendCombo: async (c) => { sent.push(c); return true; }, typeText: async () => true } });
-  await client.emit('action.keyDown', { context: { actionId: 'hotkey', bindingInstanceId: 'b1' } });
+  await client.emit('action.keyDown', { context: { actionId: 'send-hotkey', bindingInstanceId: 'b1' } });
   assert.deepEqual(sent, ['Win+V']);
 });
 
@@ -35,7 +35,7 @@ test('hotkey with no combo shows error', async () => {
   const client = makeFakeClient();
   client.getSettings = async () => ({});
   registerHotkey(client, { win: { sendCombo: async () => true, typeText: async () => true } });
-  await client.emit('action.keyDown', { context: { actionId: 'hotkey', bindingInstanceId: 'b1' } });
+  await client.emit('action.keyDown', { context: { actionId: 'send-hotkey', bindingInstanceId: 'b1' } });
   assert.equal(client.calls.showError.length, 1);
 });
 

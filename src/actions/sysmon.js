@@ -136,7 +136,7 @@ export function layoutRamPanel({ used, total }) {
   if (typeof used !== 'number' || used < 0 || typeof total !== 'number' || total <= 0) return [{ text: '—' }];
   return [
     { text: `${fmtGbOne(used)}GB`, color: '#9adcff', size: 34 },
-    { text: `toplam ${fmtGbOne(total)}GB`, size: 20 },
+    { text: `${fmtGbOne(total)}GB`, size: 26 },
   ];
 }
 
@@ -207,10 +207,10 @@ export function registerSysmon(client, { siImpl } = {}) {
         case 'sys-ram': rows = layoutRamPanel(snap); break;
         case 'sys-disk-pick': {
           const drives = Array.isArray(snap) ? snap : [];
-          const prefix = cfg.drive ? cfg.drive.toUpperCase().replace(/:$/, '') : null;
+          const prefix = (cfg.drive || 'C').toUpperCase().replace(/:$/, '');
           const matched = prefix ? drives.filter((d) => String(d.fs).toUpperCase().startsWith(prefix)) : drives;
           const drive = pickDiskRotation(matched, tick);
-          if (!drive) { rows = [{ text: cfg.drive ? `${cfg.drive} —` : '—' }]; break; }
+          if (!drive) { rows = [{ text: `${prefix}: —` }]; break; }
           if (matched.length > 1) tick++;
           rows = layoutDiskPanel({ fs: drive.fs, freeB: drive.available ?? (drive.size - drive.used) });
           break;

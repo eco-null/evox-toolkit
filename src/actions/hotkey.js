@@ -2,7 +2,7 @@ import { forAction, decodeError } from '../util.js';
 import { createWindowsLayer } from '../windows.js';
 
 export function registerHotkey(client, { win = createWindowsLayer() } = {}) {
-  const hotkeyDown = forAction('hotkey')(async (event) => {
+  const hotkeyDown = forAction('send-hotkey')(async (event) => {
     const id = event.context.bindingInstanceId;
     try {
       let settings = await client.getSettings(id).catch(() => ({}));
