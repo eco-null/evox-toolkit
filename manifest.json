@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "pluginId": "01508eca-7af1-4dbf-8869-226e4cec4896",
+  "sdkVersion": "0.1.0",
+  "name": "evoX Toolkit",
+  "description": "evoX Toolkit — yerel T1 geliştirme plugini.",
+  "version": "0.1.0",
+  "runtime": {
+    "kind": "trusted-node",
+    "entry": "runtime.mjs"
+  },
+  "hostCompatibility": {
+    "minimumVersion": "0.2.0"
+  },
+  "permissions": [
+    {
+      "name": "key.display"
+    }
+  ],
+  "settingsSchema": [],
+  "actions": [
+    {
+      "id": "hello",
+      "name": "Merhaba",
+      "description": "Tuşa basınca saati yazar.",
+      "controllers": [
+        "Keypad"
+      ],
+      "supportedInMultiActions": false,
+      "settingsSchema": []
+    }
+  ]
+}
