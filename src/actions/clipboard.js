@@ -1,6 +1,7 @@
 import { forAction, decodeError } from '../util.js';
+import { createWindowsLayer } from '../windows.js';
 
-export function registerClipboard(client, { win } = {}) {
+export function registerClipboard(client, { win = createWindowsLayer() } = {}) {
   const values = new Map();
 
   const handler = forAction('clipboard')(async (event) => {

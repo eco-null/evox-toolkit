@@ -1,6 +1,7 @@
 import { forAction, decodeError } from '../util.js';
+import { createWindowsLayer } from '../windows.js';
 
-export function registerOpenUrl(client, { win } = {}) {
+export function registerOpenUrl(client, { win = createWindowsLayer() } = {}) {
   const handler = forAction('open-url')(async (event) => {
     const id = event.context.bindingInstanceId;
     try {
