@@ -1,9 +1,9 @@
 const TOKEN_URL = 'https://accounts.spotify.com/api/token';
 const REFRESH_WINDOW_MS = 30 * 60 * 1000;
 
-export function createSpotifyClient({ clientId, clientSecret, refreshToken, fetchImpl = globalThis.fetch }) {
-  let accessToken = null;
-  let expiresAt = 0;
+export function createSpotifyClient({ clientId, clientSecret, refreshToken, accessToken, fetchImpl = globalThis.fetch }) {
+  let accessTokenCache = accessToken ?? null;
+  let expiresAt = accessToken ? Date.now() + 55 * 60 * 1000 : 0;
   const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
   async function refresh() {
@@ -22,7 +22,7 @@ export function createSpotifyClient({ clientId, clientSecret, refreshToken, fetc
       });
       if (!res.ok) throw Object.assign(new Error(`token refresh failed (${res.status}) secret:${Boolean(clientSecret).toString()} token:${Boolean(refreshToken).toString()}`), { code: 'TOKEN' });
       const data = await res.json();
-      accessToken = data.access_token;
+      accessTokenCache = data.access_token;
       expiresAt = Date.now() + Number(data.expires_in || 3600) * 1000;
       return true;
     } finally {
@@ -31,8 +31,11 @@ export function createSpotifyClient({ clientId, clientSecret, refreshToken, fetc
   }
 
   async function getToken() {
-    if (!accessToken || Date.now() >= expiresAt - REFRESH_WINDOW_MS) await refresh();
-    return accessToken;
+    if (!accessTokenCache || Date.now() >= expiresAt - REFRESH_WINDOW_MS) {
+      if (!refreshToken) throw Object.assign(new Error('expired accessToken & no refresh token'), { code: 'TOKEN' });
+      await refresh();
+    }
+    return accessTokenCache;
   }
 
   async function rawCall(method, path, { body, query } = {}) {
@@ -60,7 +63,7 @@ export function createSpotifyClient({ clientId, clientSecret, refreshToken, fetc
   async function callApi(method, path, opts = {}) {
     const r = await rawCall(method, path, opts);
     if (r.status === 401) {
-      accessToken = null;
+      accessTokenCache = null;
       await refresh();
       return rawCall(method, path, opts);
     }

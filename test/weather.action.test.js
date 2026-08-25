@@ -3,14 +3,29 @@ import assert from 'node:assert/strict';
 import { makeFakeClient } from './helpers/fake-client.js';
 import { registerWeather } from '../src/actions/weather.js';
 
-test('renders temp and humidity stacked on willAppear', async () => {
+test('renders temp and humidity as image rows on willAppear', async () => {
   const client = makeFakeClient();
   client.getSettings = async () => ({ city: 'Istanbul' });
   registerWeather(client, {
     fetchImpl: async () => ({ ok: true, text: async () => '+29°C|50%' }),
+    png: async (svg) => Buffer.from(svg, 'utf8'),
   });
   await client.emit('action.willAppear', { context: { actionId: 'weather', bindingInstanceId: 'b1' } });
-  assert.deepEqual(client.calls.setTitle[0], ['b1', '+29°C\n50%']);
+  assert.equal(client.calls.setImage.length, 1);
+  assert.equal(client.calls.setImage[0][0], 'b1');
+  assert.ok(Buffer.from(client.calls.setImage[0][1].dataBase64, 'base64').toString('utf8').includes('+29°C'));
+  assert.ok(Buffer.from(client.calls.setImage[0][1].dataBase64, 'base64').toString('utf8').includes('50%'));
+});
+
+test('renders title fallback when png fails', async () => {
+  const client = makeFakeClient();
+  client.getSettings = async () => ({ city: 'Ankara' });
+  registerWeather(client, {
+    fetchImpl: async () => ({ ok: true, text: async () => '+15°C|20%' }),
+    png: async () => { throw new Error('no'); },
+  });
+  await client.emit('action.keyDown', { context: { actionId: 'weather', bindingInstanceId: 'b1' } });
+  assert.deepEqual(client.calls.setTitle[0], ['b1', '+15°C\n20%']);
 });
 
 test('empty city shows hint', async () => {

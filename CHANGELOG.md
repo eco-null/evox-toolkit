@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.0 — 2026-08-25
+
+- Paneller ve hava durumu artık **görsel render**: sharp ile 128×128 PNG — iki satır büyük okunur (CPU/GPU: sıcaklık üstte açık mavi + kullanım altta; RAM: `12.9/32GB`; Disk: `C: 166GB`; Hava: `+28°C`/`39%`). sharp başarısız olursa metin fallback.
+- **LibreHardwareMonitor tam destek:** ağaç JSON parse (SensorId/Type/Value, virgül ondalık). CPU sıcaklık zinciri: si → WMI → LHM (AMD: Tctl/Tdie). GPU zinciri: nvidia-smi → si.graphics → LHM (gpu-nvidia). Veri adresi boşsa otomatik `http://localhost:8085/data.json`.
+- **Spotify:** `getSettings(binding)` boşsa plugin-geneli settings fallback; hatada hangi ayar anahtarlarının geldiği loglanır (değerler değil); **accessToken yedek alanı** (taze access token yapıştır → 1 saat kesintisiz).
+
 ## v1.1.1 — 2026-08-25
 
 - Spotify credential alanları `secret` → `text` tipine çevrildi (T1 host'te secret tipi desteklenmeyebiliyor; metin alanları her zaman çalışır).

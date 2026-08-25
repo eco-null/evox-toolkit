@@ -3,7 +3,7 @@
   "pluginId": "01508eca-7af1-4dbf-8869-226e4cec4896",
   "sdkVersion": "0.1.0",
   "name": "evoX Toolkit",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "runtime": { "kind": "trusted-node", "entry": "runtime.mjs" },
   "hostCompatibility": { "minimumVersion": "0.2.0" },
   "permissions": [{ "name": "key.display" }],
@@ -41,6 +41,7 @@
         { "key": "clientId", "type": "text", "label": "Spotify Client ID" },
         { "key": "clientSecret", "type": "text", "label": "Spotify Client Secret" },
         { "key": "refreshToken", "type": "text", "label": "Spotify Refresh Token" },
+        { "key": "accessToken", "type": "text", "label": "Spotify Access Token (taze, opsiyonel)" },
         { "key": "mode", "type": "select", "label": "Mod", "default": "toggle-play",
           "options": [
             { "value": "toggle-play", "label": "Çal/Durdur" },
@@ -50,8 +51,9 @@
             { "value": "mute", "label": "Sessiz" }] }] },
     { "id": "spotify-volume", "name": "Spotify Ses", "controllers": ["Knob", "Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [
-        { "key": "clientId", "type": "secret", "label": "Spotify Client ID" },
-        { "key": "clientSecret", "type": "secret", "label": "Spotify Client Secret" },
-        { "key": "refreshToken", "type": "secret", "label": "Spotify Refresh Token" }] }
+        { "key": "clientId", "type": "text", "label": "Spotify Client ID" },
+        { "key": "clientSecret", "type": "text", "label": "Spotify Client Secret" },
+        { "key": "refreshToken", "type": "text", "label": "Spotify Refresh Token" },
+        { "key": "accessToken", "type": "text", "label": "Spotify Access Token (taze, opsiyonel)" }] }
   ]
 }

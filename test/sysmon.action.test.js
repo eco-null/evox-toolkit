@@ -1,41 +1,45 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { drawCpuPanel, drawGpuPanel, drawRamPanel, drawDiskPanel, pickDiskRotation } from '../src/actions/sysmon.js';
+import {
+  layoutCpuPanel, layoutGpuPanel, layoutRamPanel, layoutDiskPanel, pickDiskRotation,
+  parseLhm, parseLhmValue,
+} from '../src/actions/sysmon.js';
 
-test('drawCpuPanel big two values with temp', () => {
-  assert.equal(drawCpuPanel({ load: 61, temp: 74 }), '74°C\n61%');
+test('layoutCpuPanel stacked temp+load', () => {
+  const rows = layoutCpuPanel({ load: 61, temp: 74 });
+  assert.deepEqual(rows, [{ text: '74°C', color: '#9adcff', size: 34 }, { text: '61%' }]);
 });
 
-test('drawCpuPanel without temp shows load only', () => {
-  assert.equal(drawCpuPanel({ load: 61, temp: null }), '61%');
+test('layoutCpuPanel without temp shows load only', () => {
+  assert.deepEqual(layoutCpuPanel({ load: 61, temp: null }), [{ text: '61%' }]);
 });
 
-test('drawCpuPanel no data shows dash', () => {
-  assert.equal(drawCpuPanel({ load: null, temp: null }), '—');
+test('layoutCpuPanel no data shows dash', () => {
+  assert.deepEqual(layoutCpuPanel({ load: null, temp: null }), [{ text: '—' }]);
 });
 
-test('drawGpuPanel big two values', () => {
-  assert.equal(drawGpuPanel({ util: 12, temp: 62 }), '62°C\n12%');
+test('layoutGpuPanel stacked temp+util', () => {
+  assert.deepEqual(layoutGpuPanel({ util: 12, temp: 62 }), [{ text: '62°C', color: '#9adcff', size: 34 }, { text: '12%' }]);
 });
 
-test('drawGpuPanel fallback', () => {
-  assert.equal(drawGpuPanel({ util: null, temp: null }), '—');
+test('layoutGpuPanel fallback', () => {
+  assert.deepEqual(layoutGpuPanel({ util: null, temp: null }), [{ text: '—' }]);
 });
 
-test('drawRamPanel used/total compact', () => {
-  assert.equal(drawRamPanel({ used: 12.9 * 1024 ** 3, total: 32 * 1024 ** 3 }), '12.9/32GB');
+test('layoutRamPanel compact used/total', () => {
+  assert.deepEqual(layoutRamPanel({ used: 12.9 * 1024 ** 3, total: 32 * 1024 ** 3 }), [{ text: '12.9/32GB', size: 28 }]);
 });
 
-test('drawRamPanel invalid shows dash', () => {
-  assert.equal(drawRamPanel({ used: null, total: null }), '—');
+test('layoutRamPanel invalid shows dash', () => {
+  assert.deepEqual(layoutRamPanel({ used: null, total: null }), [{ text: '—' }]);
 });
 
-test('drawDiskPanel free space only GB', () => {
-  assert.equal(drawDiskPanel({ fs: 'C:', freeB: 166 * 1024 ** 3 }), 'C: 166GB');
+test('layoutDiskPanel free space', () => {
+  assert.deepEqual(layoutDiskPanel({ fs: 'C:', freeB: 166 * 1024 ** 3 }), [{ text: 'C: 166GB', size: 28 }]);
 });
 
-test('drawDiskPanel free space TB', () => {
-  assert.equal(drawDiskPanel({ fs: 'P:', freeB: 1.34 * 1024 ** 4 }), 'P: 1.3TB');
+test('layoutDiskPanel TB', () => {
+  assert.deepEqual(layoutDiskPanel({ fs: 'P:', freeB: 1.34 * 1024 ** 4 }), [{ text: 'P: 1.3TB', size: 28 }]);
 });
 
 test('pickDiskRotation rotates', () => {
@@ -43,4 +47,41 @@ test('pickDiskRotation rotates', () => {
   assert.equal(pickDiskRotation(drives, 0).fs, 'C:');
   assert.equal(pickDiskRotation(drives, 1).fs, 'D:');
   assert.equal(pickDiskRotation([], 0), null);
+});
+
+test('parseLhmValue handles comma decimals and units', () => {
+  assert.equal(parseLhmValue('63,0 °C'), 63);
+  assert.equal(parseLhmValue('7,5 %'), 7.5);
+  assert.equal(parseLhmValue(61.2), 61.2);
+  assert.equal(parseLhmValue(''), null);
+  assert.equal(parseLhmValue(undefined), null);
+});
+
+test('parseLhm extracts amdcpu tctl and nvidia gpu', () => {
+  const tree = {
+    Text: 'root', Children: [
+      {
+        Text: 'AMD Ryzen', Children: [
+          { Text: 'Temperatures', Children: [
+            { Text: 'Core (Tctl/Tdie)', Value: '89,1 °C', Type: 'Temperature', SensorId: '/amdcpu/0/temperature/2' },
+            { Text: 'CCD1 (Tdie)', Value: '95,0 °C', Type: 'Temperature', SensorId: '/amdcpu/0/temperature/3' },
+          ] },
+        ],
+      },
+      {
+        Text: 'NVIDIA RTX', Children: [
+          { Text: 'Temperatures', Children: [
+            { Text: 'GPU Core', Value: '60,4 °C', Type: 'Temperature', SensorId: '/gpu-nvidia/0/temperature/0' },
+          ] },
+          { Text: 'Load', Children: [
+            { Text: 'GPU Core', Value: '7,0 %', Type: 'Load', SensorId: '/gpu-nvidia/0/load/0' },
+          ] },
+        ],
+      },
+    ],
+  };
+  const out = parseLhm(tree);
+  assert.equal(out.cpuTemp, 89);
+  assert.equal(out.gpuTemp, 60);
+  assert.equal(out.gpuUtil, 7);
 });

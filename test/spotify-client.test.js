@@ -42,7 +42,6 @@ test('callApi attaches Bearer token', async () => {
   assert.equal(r.ok, true);
   assert.ok(seen[0].auth.startsWith('Bearer '));
 });
-
 test('callApi refreshes once on 401 and retries', async () => {
   let apiCalls = 0;
   const client = createSpotifyClient({
@@ -56,6 +55,21 @@ test('callApi refreshes once on 401 and retries', async () => {
   const r = await client.callApi('GET', '/me/player');
   assert.equal(r.ok, true);
   assert.equal(apiCalls, 2);
+});
+
+test('accessToken option is used without refresh', async () => {
+  let tokenCalls = 0;
+  const client = createSpotifyClient({
+    clientId: 'id', clientSecret: 's', refreshToken: 'rt', accessToken: 'fresh',
+    fetchImpl: mockFetch(async (url) => {
+      if (url.includes('accounts.spotify.com')) { tokenCalls++; return { status: 200, body: { access_token: 'x', expires_in: 3600 } }; }
+      return { status: 200, body: { ok: true } };
+    }),
+  });
+  const r = await client.callApi('GET', '/me/player');
+  assert.equal(r.ok, true);
+  assert.equal(tokenCalls, 0);
+  assert.equal(await client.getToken(), 'fresh');
 });
 
 test('normalizeTrack extracts album art + name', () => {

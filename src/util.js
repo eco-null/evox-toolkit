@@ -17,6 +17,10 @@ export function safeTitle(text, maxLen = 60) {
   return s.slice(0, maxLen) + '…';
 }
 
+export function escapeXml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 export function decodeError(err) {
   const code = err?.code;
   if (code === 'CONTEXT_EXPIRED' || code === 'PLUGIN_DISABLED') return { silent: true };

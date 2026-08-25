@@ -66,9 +66,14 @@ export function registerSpotify(
   const covers = new Map();
   const muteVolumes = new Map();
 
-  const settingsFor = (id) => client.getSettings(id);
+  const settingsFor = async (id) => {
+    const s = await client.getSettings(id).catch(() => null);
+    if (s && typeof s === 'object' && Object.keys(s).length) return s;
+    const p = await client.getSettings().catch(() => null);
+    return p && typeof p === 'object' ? p : {};
+  };
   const buildClient = (s) => makeClient({
-    clientId: s?.clientId, clientSecret: s?.clientSecret, refreshToken: s?.refreshToken, fetchImpl,
+    clientId: s?.clientId, clientSecret: s?.clientSecret, refreshToken: s?.refreshToken, accessToken: s?.accessToken, fetchImpl,
   });
 
   async function runningState(id) {
@@ -115,6 +120,8 @@ export function registerSpotify(
     } catch (err) {
       if (decodeError(err).silent) return;
       console.error('[spotify]', err?.message || err?.code || err);
+      const sk = await settingsFor(id).catch(() => ({}));
+      console.error('[spotify] settings keys:', Object.keys(sk).length ? Object.keys(sk).join(',') : 'BOŞ');
       try { await client.setTitle(id, '—'); await client.showError(id); } catch { /* ignore */ }
     }
   });

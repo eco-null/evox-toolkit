@@ -1,10 +1,49 @@
 import { forAction, timedTask, clamp, decodeError } from '../util.js';
 import { execPs } from '../windows.js';
+import { renderKey } from '../keyimg.js';
+
+const DEFAULT_LHM_URL = 'http://localhost:8085/data.json';
 
 let siCache = null;
 async function moduleSi() {
   if (!siCache) siCache = await import('systeminformation');
   return siCache;
+}
+
+export function parseLhmValue(v) {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  const s = String(v ?? '').replace(',', '.').replace(/[^\d.-]/g, '');
+  if (!s) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function parseLhm(root) {
+  const out = { cpuTemp: null, gpuTemp: null, gpuUtil: null };
+  const all = [];
+  (function walk(n) {
+    if (!n || typeof n !== 'object') return;
+    all.push(n);
+    if (Array.isArray(n.Children)) n.Children.forEach(walk);
+  })(root);
+  for (const node of all) {
+    const sensorId = String(node.SensorId ?? '');
+    const type = String(node.Type ?? '');
+    const text = String(node.Text ?? '');
+    const v = parseLhmValue(node.Value);
+    if (v == null || v <= 0) continue;
+    if (sensorId.startsWith('/amdcpu')) {
+      if (type === 'Temperature') {
+        if (text.includes('Tctl') || (out.cpuTemp == null && text.includes('CCDs Max')) || (out.cpuTemp == null && text.startsWith('CCD'))) {
+          out.cpuTemp = Math.round(v);
+        }
+      }
+    } else if (sensorId.startsWith('/gpu-nvidia')) {
+      if (type === 'Temperature' && out.gpuTemp == null) out.gpuTemp = Math.round(v);
+      if (type === 'Load' && text === 'GPU Core' && out.gpuUtil == null) out.gpuUtil = Math.round(v);
+    }
+  }
+  return out;
 }
 
 export function defaultSi() {
@@ -25,20 +64,12 @@ export function defaultSi() {
       if (Number.isFinite(val) && val !== 0xFFFFFFFF && val > 100) return { main: (val / 10.0) - 273.15 };
       return null;
     },
-    lhmTemp: async (url) => {
-      if (!url) return null;
+    lhmInfo: async (url) => {
       try {
-        const res = await fetch(url);
+        const target = String(url ?? '').trim() || DEFAULT_LHM_URL;
+        const res = await fetch(target);
         if (!res.ok) return null;
-        const data = await res.json();
-        const sensors = Array.isArray(data) ? data : (data?.Sensors ?? []);
-        const hit = sensors.find((s) => {
-          const name = String(s?.Name ?? '').toLowerCase();
-          return name.includes('cpu package') || name.includes('cpu temperature');
-        });
-        const v = Number(hit?.Value);
-        if (Number.isFinite(v) && v > 0 && v < 130) return { main: v };
-        return null;
+        return parseLhm(await res.json());
       } catch { return null; }
     },
     gpuInfo: async () => {
@@ -83,33 +114,34 @@ function fmtFreeGb(v) {
   return `${Math.round(g)}GB`;
 }
 
-export function drawCpuPanel({ load, temp }) {
+export function layoutCpuPanel({ load, temp }) {
   const l = typeof load === 'number' && Number.isFinite(load) ? clamp(Math.round(load), 0, 100) : null;
   const t = typeof temp === 'number' && temp > 0 && temp < 130 ? Math.round(temp) : null;
-  if (t == null && l == null) return '—';
-  if (t == null) return `${l}%`;
-  if (l == null) return `${t}°C`;
-  return `${t}°C\n${l}%`;
+  const rows = [];
+  if (t != null) rows.push({ text: `${t}°C`, color: '#9adcff', size: 34 });
+  if (l != null) rows.push({ text: `${l}%` });
+  return rows.length ? rows : [{ text: '—' }];
 }
 
-export function drawGpuPanel({ util, temp }) {
+export function layoutGpuPanel({ util, temp }) {
   const u = typeof util === 'number' && util >= 0 ? clamp(Math.round(util), 0, 100) : null;
   const t = typeof temp === 'number' && temp > 0 && temp < 130 ? Math.round(temp) : null;
-  if (u == null && t == null) return '—';
-  if (t == null) return `${u}%`;
-  if (u == null) return `${t}°C`;
-  return `${t}°C\n${u}%`;
+  const rows = [];
+  if (t != null) rows.push({ text: `${t}°C`, color: '#9adcff', size: 34 });
+  if (u != null) rows.push({ text: `${u}%` });
+  return rows.length ? rows : [{ text: '—' }];
 }
 
-export function drawRamPanel({ used, total }) {
-  if (typeof used !== 'number' || used < 0 || typeof total !== 'number' || total <= 0) return '—';
-  return `${fmtGbOne(used)}/${fmtGbOne(total)}GB`;
+export function layoutRamPanel({ used, total }) {
+  if (typeof used !== 'number' || used < 0 || typeof total !== 'number' || total <= 0) return [{ text: '—' }];
+  return [{ text: `${fmtGbOne(used)}/${fmtGbOne(total)}GB`, size: 28 }];
 }
 
-export function drawDiskPanel({ fs, freeB }) {
-  if (!fs || typeof freeB !== 'number' || !Number.isFinite(freeB) || freeB < 0) return '—';
+export function layoutDiskPanel({ fs, freeB }) {
+  if (!fs || typeof freeB !== 'number' || !Number.isFinite(freeB) || freeB < 0) return [{ text: '—' }];
   const label = String(fs).replace(/:$/, ':');
-  return `${label} ${fmtFreeGb(freeB)}`;
+  const text = `${label} ${fmtFreeGb(freeB)}`;
+  return [{ text, size: text.length >= 7 ? 28 : 34 }];
 }
 
 export function pickDiskRotation(fsArr, tick) {
@@ -123,10 +155,21 @@ async function snapshotFor(panelId, si, cfg) {
       const [load, temp] = await Promise.all([si.currentLoad().catch(() => null), si.cpuTemperature().catch(() => null)]);
       let t = temp?.main ?? null;
       if (!(typeof t === 'number' && t > 0)) t = (await si.wmiTemp())?.main ?? null;
-      if (!(typeof t === 'number' && t > 0) && cfg?.lhmUrl) t = (await si.lhmTemp(cfg.lhmUrl)) ?? null;
+      if (!(typeof t === 'number' && t > 0)) {
+        const lhm = await si.lhmInfo(cfg.lhmUrl).catch(() => null);
+        if (lhm?.cpuTemp) t = lhm.cpuTemp;
+      }
       return { load: load && typeof load === 'object' ? load.currentLoad : null, temp: t };
     }
-    case 'sys-gpu': return si.gpuInfo();
+    case 'sys-gpu': {
+      const g = await si.gpuInfo().catch(() => ({ util: null, temp: null }));
+      if (g && g.util != null) return g;
+      const lhm = await si.lhmInfo(cfg.lhmUrl).catch(() => null);
+      if (lhm && (lhm.gpuUtil != null || lhm.gpuTemp != null)) {
+        return { util: lhm.gpuUtil ?? g.util, temp: lhm.gpuTemp ?? g.temp };
+      }
+      return g ?? { util: null, temp: null };
+    }
     case 'sys-ram': return si.mem();
     case 'sys-disk': return si.fsAll();
     default: return null;
@@ -151,20 +194,20 @@ export function registerSysmon(client, { siImpl } = {}) {
     let tick = 0;
     const task = timedTask(async () => {
       const snap = await snapshotFor(panelId, si, cfg);
-      let title;
+      let rows;
       switch (panelId) {
-        case 'sys-cpu': title = drawCpuPanel(snap); break;
-        case 'sys-gpu': title = drawGpuPanel(snap); break;
-        case 'sys-ram': title = drawRamPanel(snap); break;
+        case 'sys-cpu': rows = layoutCpuPanel(snap); break;
+        case 'sys-gpu': rows = layoutGpuPanel(snap); break;
+        case 'sys-ram': rows = layoutRamPanel(snap); break;
         default: {
           const drives = Array.isArray(snap) ? snap : [];
           const drive = pickDiskRotation(drives, tick);
-          if (!drive) { title = '—'; break; }
+          if (!drive) { rows = [{ text: '—' }]; break; }
           if (drives.length > 1) tick++;
-          title = drawDiskPanel({ fs: drive.fs, freeB: drive.available ?? (drive.size - drive.used) });
+          rows = layoutDiskPanel({ fs: drive.fs, freeB: drive.available ?? (drive.size - drive.used) });
         }
       }
-      await client.setTitle(id, title);
+      await renderKey(client, id, rows);
     }, intervalSec * 1000);
     task.start();
     state.set(id, { task });
