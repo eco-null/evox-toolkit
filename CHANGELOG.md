@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.1 — 2026-08-25
+
+- Spotify credential alanları `secret` → `text` tipine çevrildi (T1 host'te secret tipi desteklenmeyebiliyor; metin alanları her zaman çalışır).
+- Token yenileme hatası artık HTTP durum kodu + alan dolu/boş bilgisiyle loglanır (teşhis için).
+- sys-cpu `lhmUrl` varsayılanı `http://localhost:8085/data.json` (LibreHardwareMonitor Web Server).
+
 ## v1.1.0 — 2026-08-25
 
 - Ekran düzeni (polish): CPU/GPU panellerinde etiketler kaldırıldı; sıcaklık+% büyük alt alta.

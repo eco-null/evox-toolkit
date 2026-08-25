@@ -20,7 +20,7 @@ export function createSpotifyClient({ clientId, clientSecret, refreshToken, fetc
         body: body.toString(),
         signal: controller.signal,
       });
-      if (!res.ok) throw Object.assign(new Error('token refresh failed'), { code: 'TOKEN' });
+      if (!res.ok) throw Object.assign(new Error(`token refresh failed (${res.status}) secret:${Boolean(clientSecret).toString()} token:${Boolean(refreshToken).toString()}`), { code: 'TOKEN' });
       const data = await res.json();
       accessToken = data.access_token;
       expiresAt = Date.now() + Number(data.expires_in || 3600) * 1000;
