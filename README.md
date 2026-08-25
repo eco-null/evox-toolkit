@@ -42,7 +42,7 @@ Kod değişikliğinden sonra Geliştirici penceresinden **yeniden yükle** kulla
 
 - **Hava**: Aksiyon ayarlarında **Şehir** alanı zorunludur; tuşta sıcaklık (üstte) ve nem yüzdesi (altta) büyük gösterilir. **Yenileme (dk)** alanıyla güncelleme aralığı seçilir (varsayılan 30 dk); tuş basılınca anında yenilenir.
 - **Sistem panelleri (CPU/GPU/RAM/Disk/Disk Seç)**: Aksiyon ayarlarındaki **Güncelleme (sn)** alanıyla panel yenileme aralığını seçebilirsiniz (varsayılan 3 sn). Paneller tuş üzerinde **büyük iki satır görsel** olarak çizilir (v1.2+). CPU sıcaklığı [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor)'dan okunur: LHM'i çalıştırın → **Options → Remote Web Server** açın → CPU aksiyonunun veri adresi alanı `http://localhost:8085/data.json` ile dolu gelir (boşsa otomatik denenir). GPU önce `nvidia-smi`, yoksa si.graphics(), yoksa LHM kullanılır. **Disk Seç** aksiyonunda sürücü harfi ayarı (`C` varsayılan) hangi sürücüyü göstereceğini belirler.
-- **Hotkey**: Aksiyon ayarının metin alanına kısayol elle yazılır (`combo`, örn. `Ctrl+Shift+D`); host'un kayıt alanından gelen değer ve eski `preset`/`value` anahtarları da otomatik denenir. Ayarlar hiç dönmüyorsa log `[hotkey] settings keys: ...` ile görünür.
+- **Hotkey**: Modifier **dropdown**'ından (Ctrl / Shift / Alt / Win ve komboları) seç, **Tuş** alanına basacağın tuşu yaz (`D`, `F5`, `Tab`); veya **Kısayol elle** alanına tam kombinasyon yaz (`Ctrl+Shift+D`). Host'un kendi kayıt alanından gelen değerler de otomatik denenir. Ayarlar hiç dönmüyorsa log `[hotkey] settings keys: ...` ile görünür.
 - **URL Aç**: Adres alanı zorunludur; yalnızca `http`/`https` protokolleri kabul edilir.
 
 ## Sorun giderme

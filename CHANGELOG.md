@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.0 — 2026-08-25
+
+- **Hotkey paneli**: Modifier **dropdown** (Ctrl / Shift / Alt / Win ve kombinasyonları Ctrl+Shift, Ctrl+Alt, Ctrl+Win, Shift+Alt, Ctrl+Shift+Alt) + "Tuş" metin alanı (`D`, `F5`, `Tab`); ayrıca "Kısayol elle" tam kombinasyon alanı korunur (örn. `Ctrl+Shift+D`). Çözüm sırası: elle → modifier+tuş → eski kayıt değerleri.
+- **Hava**: panelde **Yenileme (dk) — varsayılan 30** metin girişi (daha önce sayı alanı host panelinde görünmüyordu; tüm interval alanları `text` tipine çevrildi: sysmon panelleri "Güncelleme (sn) — varsayılan 3").
+- Hotkey aksiyon id: `hotkey` → `send-hotkey` (v1.4) ile native "Kısayol" ile çakışma düzeltilmişti; bu sürümde panel alanları zenginleştirildi.
+
 ## v1.4.0 — 2026-08-25
 
 - **Hava**: yenileme ayarı (`interval`, dakika, varsayılan 30) + kendi kendine güncelleme döngüsü (5 sn'de ekranı tazeler; veriyi aradaki sürede yeniden çekmez). Tuşa basınca kaybolma giderildi.

@@ -13,6 +13,25 @@ test('hotkey manual combo sends combo and shows success', async () => {
   assert.equal(client.calls.showSuccess.length, 1);
 });
 
+test('hotkey combines modifier dropdown with typed key', async () => {
+  const client = makeFakeClient();
+  client.getSettings = async () => ({ mods: 'Ctrl+Shift', key: 'D' });
+  const sent = [];
+  registerHotkey(client, { win: { sendCombo: async (c) => { sent.push(c); return true; }, typeText: async () => true } });
+  await client.emit('action.keyDown', { context: { actionId: 'send-hotkey', bindingInstanceId: 'b1' } });
+  assert.deepEqual(sent, ['Ctrl+Shift+D']);
+  assert.equal(client.calls.showSuccess.length, 1);
+});
+
+test('hotkey simple key without modifier', async () => {
+  const client = makeFakeClient();
+  client.getSettings = async () => ({ mods: 'none', key: 'F5' });
+  const sent = [];
+  registerHotkey(client, { win: { sendCombo: async (c) => { sent.push(c); return true; }, typeText: async () => true } });
+  await client.emit('action.keyDown', { context: { actionId: 'send-hotkey', bindingInstanceId: 'b1' } });
+  assert.deepEqual(sent, ['F5']);
+});
+
 test('hotkey reads combo from alternative key names', async () => {
   const client = makeFakeClient();
   client.getSettings = async () => ({ value: 'Alt+Tab' });

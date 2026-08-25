@@ -10,10 +10,17 @@ export function registerHotkey(client, { win = createWindowsLayer() } = {}) {
         const p = await client.getSettings().catch(() => ({}));
         if (p && typeof p === 'object' && Object.keys(p).length) settings = p;
       }
-      const comboCandidates = [
-        settings.combo, settings.hotkey, settings.shortcut, settings.key, settings.value, settings.preset,
-      ].map((v) => (typeof v === 'string' ? v.trim() : '')).filter(Boolean);
-      const combo = comboCandidates[0] ?? '';
+      let combo = typeof settings?.combo === 'string' ? String(settings.combo).trim() : '';
+      if (!combo) {
+        const mods = typeof settings?.mods === 'string' ? String(settings.mods).trim() : '';
+        const key = typeof settings?.key === 'string' ? String(settings.key).trim() : '';
+        if (key && mods && mods !== 'none') combo = `${mods}+${key}`;
+        else if (key) combo = key;
+      }
+      if (!combo) {
+        combo = [settings.hotkey, settings.shortcut, settings.value, settings.preset]
+          .map((v) => (typeof v === 'string' ? v.trim() : '')).filter(Boolean)[0] ?? '';
+      }
       if (!combo) {
         console.error('[hotkey] settings keys:', Object.keys(settings || {}).length ? Object.keys(settings).join(',') : 'BOŞ');
         await client.showError(id);
