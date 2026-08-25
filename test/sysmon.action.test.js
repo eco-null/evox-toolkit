@@ -26,20 +26,29 @@ test('layoutGpuPanel fallback', () => {
   assert.deepEqual(layoutGpuPanel({ util: null, temp: null }), [{ text: '—' }]);
 });
 
-test('layoutRamPanel compact used/total', () => {
-  assert.deepEqual(layoutRamPanel({ used: 12.9 * 1024 ** 3, total: 32 * 1024 ** 3 }), [{ text: '12.9/32GB', size: 28 }]);
+test('layoutRamPanel used over total two lines', () => {
+  assert.deepEqual(layoutRamPanel({ used: 12.9 * 1024 ** 3, total: 32 * 1024 ** 3 }), [
+    { text: '12.9GB', color: '#9adcff', size: 34 },
+    { text: 'toplam 32GB', size: 20 },
+  ]);
 });
 
 test('layoutRamPanel invalid shows dash', () => {
   assert.deepEqual(layoutRamPanel({ used: null, total: null }), [{ text: '—' }]);
 });
 
-test('layoutDiskPanel free space', () => {
-  assert.deepEqual(layoutDiskPanel({ fs: 'C:', freeB: 166 * 1024 ** 3 }), [{ text: 'C: 166GB', size: 28 }]);
+test('layoutDiskPanel drive letter over free space', () => {
+  assert.deepEqual(layoutDiskPanel({ fs: 'C:', freeB: 166 * 1024 ** 3 }), [
+    { text: 'C:', color: '#9adcff', size: 34 },
+    { text: '166GB', size: 26 },
+  ]);
 });
 
-test('layoutDiskPanel TB', () => {
-  assert.deepEqual(layoutDiskPanel({ fs: 'P:', freeB: 1.34 * 1024 ** 4 }), [{ text: 'P: 1.3TB', size: 28 }]);
+test('layoutDiskPanel TB free', () => {
+  assert.deepEqual(layoutDiskPanel({ fs: 'P:', freeB: 1.34 * 1024 ** 4 }), [
+    { text: 'P:', color: '#9adcff', size: 34 },
+    { text: '1.3TB', size: 26 },
+  ]);
 });
 
 test('pickDiskRotation rotates', () => {

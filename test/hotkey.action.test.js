@@ -13,6 +13,15 @@ test('hotkey manual combo sends combo and shows success', async () => {
   assert.equal(client.calls.showSuccess.length, 1);
 });
 
+test('hotkey reads combo from alternative key names', async () => {
+  const client = makeFakeClient();
+  client.getSettings = async () => ({ value: 'Alt+Tab' });
+  const sent = [];
+  registerHotkey(client, { win: { sendCombo: async (c) => { sent.push(c); return true; }, typeText: async () => true } });
+  await client.emit('action.keyDown', { context: { actionId: 'hotkey', bindingInstanceId: 'b1' } });
+  assert.deepEqual(sent, ['Alt+Tab']);
+});
+
 test('hotkey falls back to legacy preset/combo field', async () => {
   const client = makeFakeClient();
   client.getSettings = async () => ({ preset: 'Win+V' });

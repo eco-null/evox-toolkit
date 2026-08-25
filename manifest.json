@@ -3,7 +3,7 @@
   "pluginId": "01508eca-7af1-4dbf-8869-226e4cec4896",
   "sdkVersion": "0.1.0",
   "name": "evoX Toolkit",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "runtime": { "kind": "trusted-node", "entry": "runtime.mjs" },
   "hostCompatibility": { "minimumVersion": "0.2.0" },
   "permissions": [{ "name": "key.display" }],
@@ -22,6 +22,10 @@
       "settingsSchema": [{ "key": "interval", "type": "number", "label": "Güncelleme (sn)", "default": 3 }] },
     { "id": "sys-disk", "name": "Disk", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [{ "key": "interval", "type": "number", "label": "Güncelleme (sn)", "default": 3 }] },
+    { "id": "sys-disk-pick", "name": "Disk Seç", "controllers": ["Keypad"], "supportedInMultiActions": false,
+      "settingsSchema": [
+        { "key": "drive", "type": "text", "label": "Sürücü harfi (ör. C)", "default": "C" },
+        { "key": "interval", "type": "number", "label": "Güncelleme (sn)", "default": 3 }] },
     { "id": "hotkey", "name": "Hotkey", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [
         { "key": "combo", "type": "text", "label": "Kısayol (ör. Ctrl+Shift+D)", "default": "" }] },

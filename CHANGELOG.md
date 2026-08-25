@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.3.0 — 2026-08-25
+
+- **Sayaç**: sayı artık kalıcı — tuş her zaman sayıyı gösterir (canlı tutma döngüsü; showSuccess kaldırıldı — sayının kaybolmasına neden oluyordu); `willAppear`'da son sayı geri yüklenir.
+- **RAM/Diskl**: iki satır görsel — RAM: kullanılan üstte + `toplam XGB` altta; Disk: harf üstte (örn. `C:`), boş alan altta (`166GB`).
+- **Disk Seç** (yeni aksiyon `sys-disk-pick`): sürücü seçilir (ayar `drive`, örn. `E`) sadece o sürücü gösterilir; eski **Disk** aksiyonu (tüm sürücüler döner) duruyor.
+- **Hotkey**: manuel kısayol desteği genişletildi — `combo/hotkey/shortcut/key/value/preset` ayar anahtarlarının ilkini kullanır; ayarlar boşsa plugin-geneli settings denenir; hiç kısayol yoksa hangi anahtarların geldiği loglanır (`[hotkey] settings keys:`).
+- **Spotify**: anahtar ayarlara ek olarak **`config.json`** desteği — proje köküne `config.json` koy (örn. `{ "spotify": { "clientId": "...", "clientSecret": "...", "refreshToken": "...", "accessToken": "..." } }`; `config.example.json` şablonu ile) → ayarlar okunmasa bile credential'lar çalışır. Sıra: aksiyon ayarı → config.json → plugin-geneli ayarlar.
+
 ## v1.2.0 — 2026-08-25
 
 - Paneller ve hava durumu artık **görsel render**: sharp ile 128×128 PNG — iki satır büyük okunur (CPU/GPU: sıcaklık üstte açık mavi + kullanım altta; RAM: `12.9/32GB`; Disk: `C: 166GB`; Hava: `+28°C`/`39%`). sharp başarısız olursa metin fallback.

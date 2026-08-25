@@ -1,5 +1,19 @@
+import { readFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { forAction, decodeError, timedTask, clamp, safeTitle } from '../util.js';
 import { createSpotifyClient } from '../spotify-client.js';
+
+const CONFIG_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'config.json');
+let fileCfgPromise = null;
+async function fileConfig() {
+  if (!fileCfgPromise) {
+    fileCfgPromise = readFile(CONFIG_PATH, 'utf8')
+      .then((raw) => { try { return JSON.parse(raw) ?? {}; } catch { return {}; } })
+      .catch(() => ({}));
+  }
+  return fileCfgPromise;
+}
 
 export async function lazySharpResize(buf) {
   try {
@@ -67,10 +81,26 @@ export function registerSpotify(
   const muteVolumes = new Map();
 
   const settingsFor = async (id) => {
-    const s = await client.getSettings(id).catch(() => null);
-    if (s && typeof s === 'object' && Object.keys(s).length) return s;
-    const p = await client.getSettings().catch(() => null);
-    return p && typeof p === 'object' ? p : {};
+    const [s, f] = await Promise.all([
+      client.getSettings(id).catch(() => null),
+      fileConfig().catch(() => ({})),
+    ]);
+    const fileSpotify = f?.spotify && typeof f.spotify === 'object' ? f.spotify : {};
+    const bound = s && typeof s === 'object' ? s : {};
+    const keys = ['clientId', 'clientSecret', 'refreshToken', 'accessToken'];
+    const merged = { ...bound };
+    for (const k of keys) {
+      if ((merged[k] == null || merged[k] === '') && fileSpotify[k] != null) merged[k] = fileSpotify[k];
+    }
+    if (!Object.keys(bound).length) {
+      const p = await client.getSettings().catch(() => null);
+      if (p && typeof p === 'object') {
+        for (const k of keys) {
+          if (p[k] != null && p[k] !== '' && (merged[k] == null || merged[k] === '')) merged[k] = p[k];
+        }
+      }
+    }
+    return merged;
   };
   const buildClient = (s) => makeClient({
     clientId: s?.clientId, clientSecret: s?.clientSecret, refreshToken: s?.refreshToken, accessToken: s?.accessToken, fetchImpl,

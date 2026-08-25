@@ -134,14 +134,19 @@ export function layoutGpuPanel({ util, temp }) {
 
 export function layoutRamPanel({ used, total }) {
   if (typeof used !== 'number' || used < 0 || typeof total !== 'number' || total <= 0) return [{ text: '—' }];
-  return [{ text: `${fmtGbOne(used)}/${fmtGbOne(total)}GB`, size: 28 }];
+  return [
+    { text: `${fmtGbOne(used)}GB`, color: '#9adcff', size: 34 },
+    { text: `toplam ${fmtGbOne(total)}GB`, size: 20 },
+  ];
 }
 
 export function layoutDiskPanel({ fs, freeB }) {
   if (!fs || typeof freeB !== 'number' || !Number.isFinite(freeB) || freeB < 0) return [{ text: '—' }];
   const label = String(fs).replace(/:$/, ':');
-  const text = `${label} ${fmtFreeGb(freeB)}`;
-  return [{ text, size: text.length >= 7 ? 28 : 34 }];
+  return [
+    { text: label, color: '#9adcff', size: 34 },
+    { text: fmtFreeGb(freeB), size: 26 },
+  ];
 }
 
 export function pickDiskRotation(fsArr, tick) {
@@ -172,6 +177,7 @@ async function snapshotFor(panelId, si, cfg) {
     }
     case 'sys-ram': return si.mem();
     case 'sys-disk': return si.fsAll();
+    case 'sys-disk-pick': return si.fsAll();
     default: return null;
   }
 }
@@ -190,7 +196,7 @@ export function registerSysmon(client, { siImpl } = {}) {
     stopBind(id);
     const settings = await client.getSettings(id).catch(() => ({}));
     const intervalSec = clamp(Number(settings?.interval) || 3, 1, 60);
-    const cfg = { lhmUrl: String(settings?.lhmUrl ?? '').trim() };
+    const cfg = { lhmUrl: String(settings?.lhmUrl ?? '').trim(), drive: String(settings?.drive ?? '').trim() };
     let tick = 0;
     const task = timedTask(async () => {
       const snap = await snapshotFor(panelId, si, cfg);
@@ -199,6 +205,16 @@ export function registerSysmon(client, { siImpl } = {}) {
         case 'sys-cpu': rows = layoutCpuPanel(snap); break;
         case 'sys-gpu': rows = layoutGpuPanel(snap); break;
         case 'sys-ram': rows = layoutRamPanel(snap); break;
+        case 'sys-disk-pick': {
+          const drives = Array.isArray(snap) ? snap : [];
+          const prefix = cfg.drive ? cfg.drive.toUpperCase().replace(/:$/, '') : null;
+          const matched = prefix ? drives.filter((d) => String(d.fs).toUpperCase().startsWith(prefix)) : drives;
+          const drive = pickDiskRotation(matched, tick);
+          if (!drive) { rows = [{ text: cfg.drive ? `${cfg.drive} —` : '—' }]; break; }
+          if (matched.length > 1) tick++;
+          rows = layoutDiskPanel({ fs: drive.fs, freeB: drive.available ?? (drive.size - drive.used) });
+          break;
+        }
         default: {
           const drives = Array.isArray(snap) ? snap : [];
           const drive = pickDiskRotation(drives, tick);
@@ -213,7 +229,7 @@ export function registerSysmon(client, { siImpl } = {}) {
     state.set(id, { task });
   };
 
-  for (const panelId of ['sys-cpu', 'sys-gpu', 'sys-ram', 'sys-disk']) {
+  for (const panelId of ['sys-cpu', 'sys-gpu', 'sys-ram', 'sys-disk', 'sys-disk-pick']) {
     client.on('action.willAppear', forAction(panelId)((event) => startBind(panelId, event)));
     client.on('action.willDisappear', forAction(panelId)((event) => stopBind(event.context.bindingInstanceId)));
     client.on('action.settingsChanged', forAction(panelId)((event) => startBind(panelId, event)));

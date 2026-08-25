@@ -5,9 +5,20 @@ export function registerHotkey(client, { win = createWindowsLayer() } = {}) {
   const hotkeyDown = forAction('hotkey')(async (event) => {
     const id = event.context.bindingInstanceId;
     try {
-      const settings = await client.getSettings(id);
-      const combo = String((settings?.combo ?? '').trim() || settings?.preset || settings?.hotkey || '');
-      if (!combo) { await client.showError(id); return; }
+      let settings = await client.getSettings(id).catch(() => ({}));
+      if (!settings || typeof settings !== 'object' || !Object.keys(settings).length) {
+        const p = await client.getSettings().catch(() => ({}));
+        if (p && typeof p === 'object' && Object.keys(p).length) settings = p;
+      }
+      const comboCandidates = [
+        settings.combo, settings.hotkey, settings.shortcut, settings.key, settings.value, settings.preset,
+      ].map((v) => (typeof v === 'string' ? v.trim() : '')).filter(Boolean);
+      const combo = comboCandidates[0] ?? '';
+      if (!combo) {
+        console.error('[hotkey] settings keys:', Object.keys(settings || {}).length ? Object.keys(settings).join(',') : 'BOŞ');
+        await client.showError(id);
+        return;
+      }
       const ok = await win.sendCombo(combo);
       if (ok) await client.showSuccess(id); else await client.showError(id);
     } catch (err) {

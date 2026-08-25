@@ -1,0 +1,8 @@
+{
+  "spotify": {
+    "clientId": "",
+    "clientSecret": "",
+    "refreshToken": "",
+    "accessToken": ""
+  }
+}
