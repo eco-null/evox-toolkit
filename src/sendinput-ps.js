@@ -14,7 +14,7 @@ export function buildSendInputSource({ mods, vk }) {
 
   return `Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices;
 [StructLayout(LayoutKind.Sequential)] public struct KEYBDINPUT { public ushort wVk, wScan; public uint dwFlags, time; public IntPtr dwExtraInfo; }
-[StructLayout(LayoutKind.Sequential)] public struct MOUSEINPUT { public int dx, dy; public uint dwFlags, time; public IntPtr dwExtraInfo; }
+[StructLayout(LayoutKind.Sequential)] public struct MOUSEINPUT { public int dx, dy; public uint mouseData; public uint dwFlags, time; public IntPtr dwExtraInfo; }
 [StructLayout(LayoutKind.Sequential)] public struct HARDWAREINPUT { public uint uMsg; public ushort wParamL, wParamH; }
 [StructLayout(LayoutKind.Explicit)] public struct INPUTUNION { [FieldOffset(0)] public KEYBDINPUT ki; [FieldOffset(0)] public MOUSEINPUT mi; [FieldOffset(0)] public HARDWAREINPUT hi; }
 [StructLayout(LayoutKind.Sequential)] public struct INPUT { public int type; public INPUTUNION u; }
