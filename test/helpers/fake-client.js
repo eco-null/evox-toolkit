@@ -4,8 +4,13 @@ export function makeFakeClient() {
   const client = {
     handlers,
     calls,
-    on(name, fn) { handlers[name] = fn; },
-    async emit(name, payload) { if (handlers[name]) await handlers[name](payload); },
+    on(name, fn) {
+      if (!handlers[name]) handlers[name] = [];
+      handlers[name].push(fn);
+    },
+    async emit(name, payload) {
+      for (const fn of handlers[name] ?? []) await fn(payload);
+    },
     setTitle(c, t) { calls.setTitle.push([c, t]); return Promise.resolve(); },
     showSuccess(c) { calls.showSuccess.push(c); return Promise.resolve(); },
     showError(c) { calls.showError.push(c); return Promise.resolve(); },
