@@ -3,32 +3,32 @@
   "pluginId": "01508eca-7af1-4dbf-8869-226e4cec4896",
   "sdkVersion": "0.1.0",
   "name": "evoX Toolkit",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "runtime": { "kind": "trusted-node", "entry": "runtime.mjs" },
   "hostCompatibility": { "minimumVersion": "0.2.0" },
   "permissions": [{ "name": "key.display" }],
   "settingsSchema": [],
   "actions": [
-    { "id": "counter", "name": "Sayaç", "controllers": ["Keypad"], "supportedInMultiActions": false, "settingsSchema": [] },
-    { "id": "weather", "name": "Hava", "controllers": ["Keypad"], "supportedInMultiActions": false,
+    { "id": "counter", "name": "TK Sayaç", "description": "evoX Toolkit: bas-elti, uzun bas ile sıfırla", "controllers": ["Keypad"], "supportedInMultiActions": false, "settingsSchema": [] },
+    { "id": "weather", "name": "TK Hava", "description": "evoX Toolkit: wttr.in hava, sıcaklık + nem, yenileme ayarı", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [
         { "key": "city", "type": "text", "label": "Şehir", "required": true },
         { "key": "interval", "type": "text", "label": "Yenileme (dk) — varsayılan 30", "default": "30" }] },
-    { "id": "sys-cpu", "name": "CPU", "controllers": ["Keypad"], "supportedInMultiActions": false,
+    { "id": "sys-cpu", "name": "TK CPU", "description": "evoX Toolkit: LHM sıcaklık + kullanım", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [
         { "key": "interval", "type": "text", "label": "Güncelleme (sn) — varsayılan 3", "default": "3" },
         { "key": "lhmUrl", "type": "url", "label": "LibreHardwareMonitor veri adresi (CPU sıcaklığı için, opsiyonel)", "default": "http://localhost:8085/data.json" }] },
-    { "id": "sys-gpu", "name": "GPU", "controllers": ["Keypad"], "supportedInMultiActions": false,
+    { "id": "sys-gpu", "name": "TK GPU", "description": "evoX Toolkit: sıcaklık + kullanım", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [{ "key": "interval", "type": "text", "label": "Güncelleme (sn) — varsayılan 3", "default": "3" }] },
-    { "id": "sys-ram", "name": "RAM", "controllers": ["Keypad"], "supportedInMultiActions": false,
+    { "id": "sys-ram", "name": "TK RAM", "description": "evoX Toolkit: kullanılan/toplam", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [{ "key": "interval", "type": "text", "label": "Güncelleme (sn) — varsayılan 3", "default": "3" }] },
-    { "id": "sys-disk", "name": "Disk", "controllers": ["Keypad"], "supportedInMultiActions": false,
+    { "id": "sys-disk", "name": "TK Disk", "description": "evoX Toolkit: tüm sürücüler döner", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [{ "key": "interval", "type": "text", "label": "Güncelleme (sn) — varsayılan 3", "default": "3" }] },
-    { "id": "sys-disk-pick", "name": "Disk Seç", "controllers": ["Keypad"], "supportedInMultiActions": false,
+    { "id": "sys-disk-pick", "name": "TK Disk Seç", "description": "evoX Toolkit: seçilen tek sürücü", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [
         { "key": "drive", "type": "text", "label": "Sürücü harfi (ör. C)", "default": "C" },
         { "key": "interval", "type": "text", "label": "Güncelleme (sn) — varsayılan 3", "default": "3" }] },
-    { "id": "send-hotkey", "name": "Hotkey", "controllers": ["Keypad"], "supportedInMultiActions": false,
+    { "id": "send-hotkey", "name": "TK Kısayol", "description": "evoX Toolkit: modifier dropdown + tuş alanı", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [
         { "key": "mods", "type": "select", "label": "Modifier", "default": "none",
           "options": [
@@ -44,16 +44,16 @@
             { "value": "Ctrl+Shift+Alt", "label": "Ctrl+Shift+Alt" }] },
         { "key": "key", "type": "text", "label": "Tuş (ör. D, F5, Tab)" },
         { "key": "combo", "type": "text", "label": "Kısayol elle (ör. Ctrl+Shift+D)" }] },
-    { "id": "type-text", "name": "Metin Yaz", "controllers": ["Keypad"], "supportedInMultiActions": false,
+    { "id": "type-text", "name": "TK Metin Yaz", "description": "evoX Toolkit: metni yazar / yapıştırır", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [
         { "key": "text", "type": "text", "label": "Metin" },
         { "key": "pasteMode", "type": "toggle", "label": "Pano + yapıştır modu", "default": true }] },
-    { "id": "clipboard", "name": "Pano", "controllers": ["Keypad"], "supportedInMultiActions": false,
+    { "id": "clipboard", "name": "TK Pano", "description": "evoX Toolkit: panodan kopyala/yapıştır", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [
         { "key": "mode", "type": "select", "label": "Mod", "default": "copy",
           "options": [{ "value": "copy", "label": "Kopyala" }, { "value": "paste", "label": "Yapıştır" }] },
         { "key": "preview", "type": "toggle", "label": "Önizleme", "default": true }] },
-    { "id": "open-url", "name": "URL Aç", "controllers": ["Keypad"], "supportedInMultiActions": false,
+    { "id": "open-url", "name": "TK URL Aç", "description": "evoX Toolkit: http/https adresi açar", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [{ "key": "url", "type": "url", "label": "Adres", "required": true }] }
   ]
 }
