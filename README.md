@@ -10,10 +10,10 @@ evoX **T1 (trusted-node)** yerel geliştirme plugini. Ayrı bir Node process ola
 |---|---|---|
 | Sayaç | Tuşa her basışta sayacı artırır, ekranda gösterir | Keypad |
 | Hava | wttr.in tabanlı hava durumu ve sıcaklık gösterir | Keypad |
-| CPU | CPU kullanımı, sıcaklık ve frekans paneli | Keypad |
-| GPU | GPU kullanımı, belleği ve sıcaklık paneli | Keypad |
-| RAM | RAM kullanımı paneli | Keypad |
-| Disk | Disk kullanımı ve boş alan paneli | Keypad |
+| CPU | CPU sıcaklık + kullanım, büyük alt alta | Keypad |
+| GPU | GPU sıcaklık + kullanım, büyük alt alta | Keypad |
+| RAM | Kullanılan/toplam RAM (örn. `12.9/32GB`) | Keypad |
+| Disk | Sürücü boş alanı (örn. `C: 166GB`), sürücüler arası döner | Keypad |
 | Hotkey | Sistem kısayolunu (kombinasyon) tetikler | Keypad |
 | Metin Yaz | Metni yazar veya panoya kopyalayıp yapıştırır | Keypad |
 | Pano | Panodan kopyalar veya panodaki metni yapıştırır | Keypad |
@@ -41,9 +41,9 @@ Kod değişikliğinden sonra Geliştirici penceresinden **yeniden yükle** kulla
 
 ## Aksiyon bazlı kurulum notları
 
-- **Hava**: Aksiyon ayarlarında **Şehir** alanı zorunludur; şehir adını girdiğinizde wttr.in'den veri çekilir.
-- **Sistem panelleri (CPU/GPU/RAM/Disk)**: Aksiyon ayarlarındaki **Güncelleme (sn)** alanıyla panel yenileme aralığını seçebilirsiniz (varsayılan 3 sn). CPU sıcaklığı donanım destekli değilse ekranda **"—"** gösterilir.
-- **Hotkey**: **Kayıt yöntemi** seçeneğiyle hazır kısayol listesinden (`preset`) seçebilir veya `record` modunda tuş basarak kaydedebilirsiniz. `record` modu evoX'in `hotkey` veri tipini kullanır.
+- **Hava**: Aksiyon ayarlarında **Şehir** alanı zorunludur; tuşta sıcaklık (üstte) ve nem yüzdesi (altta) büyük gösterilir.
+- **Sistem panelleri (CPU/GPU/RAM/Disk)**: Aksiyon ayarlarındaki **Güncelleme (sn)** alanıyla panel yenileme aralığını seçebilirsiniz (varsayılan 3 sn). CPU sıcaklığı donanım destekli değilse yalnız kullanım yüzdesi gösterilir. Sistem sıcaklığını görmek isterseniz [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) kurup **Options → Remote Web Server**'ı açın ve **CPU** aksiyonunun **veri adresi** alanına `http://localhost:8085/data.json` girin. GPU değerleri NVIDIA denetim için `nvidia-smi` kullanır.
+- **Hotkey**: Aksiyon ayarına kısayolu elle yazın — ör. `Ctrl+Shift+D`, `Win+Shift+S`, `Alt+Tab`. Boş bırakırsanız eski sürümlerden kalma `preset`/`hotkey` değerleri ayarlanan kaydı varsa geçerli olur.
 - **Spotify / Spotify Ses**: [developer.spotify.com](https://developer.spotify.com) üzerinden uygulama oluşturup Client ID ve Client Secret edinin; Client Credentials + Refresh Token ile kimlik doğrulaması yapılır (ayarlar alanlarına girilir). **Spotify Ses** aksiyonunu bir Knob'a atayarak ses seviyesini kontrol edebilirsiniz.
 - **URL Aç**: Adres alanı zorunludur; yalnızca `http`/`https` protokolleri kabul edilir.
 

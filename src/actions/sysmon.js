@@ -1,4 +1,4 @@
-import { forAction, timedTask, fmtBytes, clamp, decodeError } from '../util.js';
+import { forAction, timedTask, clamp, decodeError } from '../util.js';
 import { execPs } from '../windows.js';
 
 let siCache = null;
@@ -25,17 +25,35 @@ export function defaultSi() {
       if (Number.isFinite(val) && val !== 0xFFFFFFFF && val > 100) return { main: (val / 10.0) - 273.15 };
       return null;
     },
+    lhmTemp: async (url) => {
+      if (!url) return null;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        const data = await res.json();
+        const sensors = Array.isArray(data) ? data : (data?.Sensors ?? []);
+        const hit = sensors.find((s) => {
+          const name = String(s?.Name ?? '').toLowerCase();
+          return name.includes('cpu package') || name.includes('cpu temperature');
+        });
+        const v = Number(hit?.Value);
+        if (Number.isFinite(v) && v > 0 && v < 130) return { main: v };
+        return null;
+      } catch { return null; }
+    },
     gpuInfo: async () => {
       try {
         const out = await execPs('nvidia-smi --query-gpu=utilization.gpu,temperature.gpu --format=csv,noheader');
         const line = String(out).split(',').map((s) => s.trim());
-        if (line.length >= 2 && Number.isFinite(Number(line[0]))) {
-          return { util: Number(line[0]), temp: Number(line[1]) || null };
+        const u = Number.parseFloat(line[0]);
+        const t = Number.parseFloat(line[1]);
+        if (Number.isFinite(u) && u >= 0) {
+          return { util: u, temp: Number.isFinite(t) && t > 0 && t < 130 ? t : null };
         }
       } catch { /* fallback */ }
       try {
         const g = await (await moduleSi()).graphics();
-        const c = g?.controllers?.[0];
+        const c = (g?.controllers ?? []).find((c) => c?.utilizationGpu != null || c?.temperatureGpu != null);
         return { util: c?.utilizationGpu ?? null, temp: c?.temperatureGpu ?? null };
       } catch { return { util: null, temp: null }; }
     },
@@ -53,30 +71,45 @@ export function defaultSi() {
   return api;
 }
 
+function fmtGbOne(v) {
+  const g = v / 1024 ** 3;
+  if (g >= 100) return String(Math.round(g));
+  return String(Math.round(g * 10) / 10);
+}
+
+function fmtFreeGb(v) {
+  const g = v / 1024 ** 3;
+  if (g >= 1000) return `${(g / 1024).toFixed(1)}TB`;
+  return `${Math.round(g)}GB`;
+}
+
 export function drawCpuPanel({ load, temp }) {
   const l = typeof load === 'number' && Number.isFinite(load) ? clamp(Math.round(load), 0, 100) : null;
   const t = typeof temp === 'number' && temp > 0 && temp < 130 ? Math.round(temp) : null;
-  return `CPU\n${l == null ? '—' : l + '%'} · ${t == null ? '—' : t + '°C'}`;
+  if (t == null && l == null) return '—';
+  if (t == null) return `${l}%`;
+  if (l == null) return `${t}°C`;
+  return `${t}°C\n${l}%`;
 }
 
 export function drawGpuPanel({ util, temp }) {
-  const u = typeof util === 'number' && util >= 0 ? Math.round(util) : null;
-  const t = typeof temp === 'number' && temp > 0 ? Math.round(temp) : null;
-  if (u == null && t == null) return 'GPU\n—';
-  return `GPU\n${u == null ? '—' : u + '%'} · ${t == null ? '—' : t + '°C'}`;
+  const u = typeof util === 'number' && util >= 0 ? clamp(Math.round(util), 0, 100) : null;
+  const t = typeof temp === 'number' && temp > 0 && temp < 130 ? Math.round(temp) : null;
+  if (u == null && t == null) return '—';
+  if (t == null) return `${u}%`;
+  if (u == null) return `${t}°C`;
+  return `${t}°C\n${u}%`;
 }
 
 export function drawRamPanel({ used, total }) {
-  if (typeof used !== 'number' || used < 0 || typeof total !== 'number' || total <= 0) return 'RAM\n—';
-  return `RAM\n${fmtBytes(used)} / ${fmtBytes(total)}\n${Math.round((used / total) * 100)}%`;
+  if (typeof used !== 'number' || used < 0 || typeof total !== 'number' || total <= 0) return '—';
+  return `${fmtGbOne(used)}/${fmtGbOne(total)}GB`;
 }
 
-export function drawDiskPanel({ fs, usedB, totalB, extra = 0 }) {
-  const label = fs ? String(fs).replace(/:$/, ':\\') : null;
-  const header = label ? `${label} ${fmtBytes(usedB)} / ${fmtBytes(totalB)}` : '—';
-  const pct = totalB > 0 ? Math.round((usedB / totalB) * 100) : null;
-  const line2 = extra > 0 ? `+${extra} sürücü` : (pct == null ? '—' : pct + '%');
-  return `${header}\n${line2}`;
+export function drawDiskPanel({ fs, freeB }) {
+  if (!fs || typeof freeB !== 'number' || !Number.isFinite(freeB) || freeB < 0) return '—';
+  const label = String(fs).replace(/:$/, ':');
+  return `${label} ${fmtFreeGb(freeB)}`;
 }
 
 export function pickDiskRotation(fsArr, tick) {
@@ -84,11 +117,13 @@ export function pickDiskRotation(fsArr, tick) {
   return fsArr[tick % fsArr.length];
 }
 
-async function snapshotFor(panelId, si) {
+async function snapshotFor(panelId, si, cfg) {
   switch (panelId) {
     case 'sys-cpu': {
       const [load, temp] = await Promise.all([si.currentLoad().catch(() => null), si.cpuTemperature().catch(() => null)]);
-      const t = temp?.main ?? (await si.wmiTemp())?.main ?? null;
+      let t = temp?.main ?? null;
+      if (!(typeof t === 'number' && t > 0)) t = (await si.wmiTemp())?.main ?? null;
+      if (!(typeof t === 'number' && t > 0) && cfg?.lhmUrl) t = (await si.lhmTemp(cfg.lhmUrl)) ?? null;
       return { load: load && typeof load === 'object' ? load.currentLoad : null, temp: t };
     }
     case 'sys-gpu': return si.gpuInfo();
@@ -112,9 +147,10 @@ export function registerSysmon(client, { siImpl } = {}) {
     stopBind(id);
     const settings = await client.getSettings(id).catch(() => ({}));
     const intervalSec = clamp(Number(settings?.interval) || 3, 1, 60);
+    const cfg = { lhmUrl: String(settings?.lhmUrl ?? '').trim() };
     let tick = 0;
     const task = timedTask(async () => {
-      const snap = await snapshotFor(panelId, si);
+      const snap = await snapshotFor(panelId, si, cfg);
       let title;
       switch (panelId) {
         case 'sys-cpu': title = drawCpuPanel(snap); break;
@@ -123,9 +159,9 @@ export function registerSysmon(client, { siImpl } = {}) {
         default: {
           const drives = Array.isArray(snap) ? snap : [];
           const drive = pickDiskRotation(drives, tick);
-          if (!drive) { title = 'Disk\n—'; break; }
+          if (!drive) { title = '—'; break; }
           if (drives.length > 1) tick++;
-          title = drawDiskPanel({ fs: drive.fs, usedB: drive.used, totalB: drive.size, extra: drives.length - 1 });
+          title = drawDiskPanel({ fs: drive.fs, freeB: drive.available ?? (drive.size - drive.used) });
         }
       }
       await client.setTitle(id, title);

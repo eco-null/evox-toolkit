@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import { makeFakeClient } from './helpers/fake-client.js';
 import { registerWeather } from '../src/actions/weather.js';
 
-test('renders city + temp on willAppear', async () => {
+test('renders temp and humidity stacked on willAppear', async () => {
   const client = makeFakeClient();
   client.getSettings = async () => ({ city: 'Istanbul' });
   registerWeather(client, {
-    fetchImpl: async () => ({ ok: true, text: async () => '+29°C' }),
+    fetchImpl: async () => ({ ok: true, text: async () => '+29°C|50%' }),
   });
   await client.emit('action.willAppear', { context: { actionId: 'weather', bindingInstanceId: 'b1' } });
-  assert.deepEqual(client.calls.setTitle[0], ['b1', 'Istanbul\n+29°C']);
+  assert.deepEqual(client.calls.setTitle[0], ['b1', '+29°C\n50%']);
 });
 
 test('empty city shows hint', async () => {
@@ -21,12 +21,12 @@ test('empty city shows hint', async () => {
   assert.deepEqual(client.calls.setTitle[0], ['b1', 'Şehir seçin']);
 });
 
-test('fetch failure shows Hata + showError', async () => {
+test('fetch failure shows dash + showError', async () => {
   const client = makeFakeClient();
   client.getSettings = async () => ({ city: 'Izmir' });
   registerWeather(client, { fetchImpl: async () => { throw new Error('fail'); } });
   await client.emit('action.keyDown', { context: { actionId: 'weather', bindingInstanceId: 'b1' } });
-  assert.deepEqual(client.calls.setTitle[0], ['b1', 'Hata']);
+  assert.deepEqual(client.calls.setTitle[0], ['b1', '—']);
   assert.equal(client.calls.showError.length, 1);
 });
 

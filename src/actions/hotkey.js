@@ -6,8 +6,7 @@ export function registerHotkey(client, { win = createWindowsLayer() } = {}) {
     const id = event.context.bindingInstanceId;
     try {
       const settings = await client.getSettings(id);
-      const capture = settings?.capture === 'record' ? 'record' : 'preset';
-      const combo = String(capture === 'record' ? (settings?.hotkey ?? '') : (settings?.preset ?? ''));
+      const combo = String((settings?.combo ?? '').trim() || settings?.preset || settings?.hotkey || '');
       if (!combo) { await client.showError(id); return; }
       const ok = await win.sendCombo(combo);
       if (ok) await client.showSuccess(id); else await client.showError(id);

@@ -2,25 +2,40 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { drawCpuPanel, drawGpuPanel, drawRamPanel, drawDiskPanel, pickDiskRotation } from '../src/actions/sysmon.js';
 
-test('drawCpuPanel with temp', () => {
-  assert.equal(drawCpuPanel({ load: 61, temp: 74 }), 'CPU\n61% · 74°C');
+test('drawCpuPanel big two values with temp', () => {
+  assert.equal(drawCpuPanel({ load: 61, temp: 74 }), '74°C\n61%');
 });
 
-test('drawCpuPanel without temp shows dash', () => {
-  assert.equal(drawCpuPanel({ load: 61, temp: null }), 'CPU\n61% · —');
+test('drawCpuPanel without temp shows load only', () => {
+  assert.equal(drawCpuPanel({ load: 61, temp: null }), '61%');
+});
+
+test('drawCpuPanel no data shows dash', () => {
+  assert.equal(drawCpuPanel({ load: null, temp: null }), '—');
+});
+
+test('drawGpuPanel big two values', () => {
+  assert.equal(drawGpuPanel({ util: 12, temp: 62 }), '62°C\n12%');
 });
 
 test('drawGpuPanel fallback', () => {
-  assert.equal(drawGpuPanel({ util: null, temp: null }), 'GPU\n—');
+  assert.equal(drawGpuPanel({ util: null, temp: null }), '—');
 });
 
-test('drawRamPanel', () => {
-  assert.equal(drawRamPanel({ used: 16.25 * 1024 ** 3, total: 32 * 1024 ** 3 }), 'RAM\n16.3 GB / 32.0 GB\n51%');
+test('drawRamPanel used/total compact', () => {
+  assert.equal(drawRamPanel({ used: 12.9 * 1024 ** 3, total: 32 * 1024 ** 3 }), '12.9/32GB');
 });
 
-test('drawDiskPanel single with extra', () => {
-  assert.equal(drawDiskPanel({ fs: 'C:', usedB: 420 * 1024 ** 3, totalB: 950 * 1024 ** 3, extra: 0 }), 'C:\\ 420.0 GB / 950.0 GB\n44%');
-  assert.equal(drawDiskPanel({ fs: 'C:', usedB: 420 * 1024 ** 3, totalB: 950 * 1024 ** 3, extra: 2 }), 'C:\\ 420.0 GB / 950.0 GB\n+2 sürücü');
+test('drawRamPanel invalid shows dash', () => {
+  assert.equal(drawRamPanel({ used: null, total: null }), '—');
+});
+
+test('drawDiskPanel free space only GB', () => {
+  assert.equal(drawDiskPanel({ fs: 'C:', freeB: 166 * 1024 ** 3 }), 'C: 166GB');
+});
+
+test('drawDiskPanel free space TB', () => {
+  assert.equal(drawDiskPanel({ fs: 'P:', freeB: 1.34 * 1024 ** 4 }), 'P: 1.3TB');
 });
 
 test('pickDiskRotation rotates', () => {

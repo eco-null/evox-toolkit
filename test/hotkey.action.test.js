@@ -3,23 +3,31 @@ import assert from 'node:assert/strict';
 import { makeFakeClient } from './helpers/fake-client.js';
 import { registerHotkey } from '../src/actions/hotkey.js';
 
-test('hotkey preset sends combo and shows success', async () => {
+test('hotkey manual combo sends combo and shows success', async () => {
   const client = makeFakeClient();
-  client.getSettings = async () => ({ capture: 'preset', preset: 'Ctrl+Shift+S' });
+  client.getSettings = async () => ({ combo: 'Ctrl+Shift+D' });
   const sent = [];
   registerHotkey(client, { win: { sendCombo: async (c) => { sent.push(c); return true; }, typeText: async () => true } });
   await client.emit('action.keyDown', { context: { actionId: 'hotkey', bindingInstanceId: 'b1' } });
-  assert.deepEqual(sent, ['Ctrl+Shift+S']);
+  assert.deepEqual(sent, ['Ctrl+Shift+D']);
   assert.equal(client.calls.showSuccess.length, 1);
 });
 
-test('hotkey record mode uses native hotkey field', async () => {
+test('hotkey falls back to legacy preset/combo field', async () => {
   const client = makeFakeClient();
-  client.getSettings = async () => ({ capture: 'record', preset: 'Win+V', hotkey: 'Win+V' });
+  client.getSettings = async () => ({ preset: 'Win+V' });
   const sent = [];
   registerHotkey(client, { win: { sendCombo: async (c) => { sent.push(c); return true; }, typeText: async () => true } });
   await client.emit('action.keyDown', { context: { actionId: 'hotkey', bindingInstanceId: 'b1' } });
   assert.deepEqual(sent, ['Win+V']);
+});
+
+test('hotkey with no combo shows error', async () => {
+  const client = makeFakeClient();
+  client.getSettings = async () => ({});
+  registerHotkey(client, { win: { sendCombo: async () => true, typeText: async () => true } });
+  await client.emit('action.keyDown', { context: { actionId: 'hotkey', bindingInstanceId: 'b1' } });
+  assert.equal(client.calls.showError.length, 1);
 });
 
 test('type-text writes via typeText and success', async () => {
