@@ -3,31 +3,66 @@
   "pluginId": "01508eca-7af1-4dbf-8869-226e4cec4896",
   "sdkVersion": "0.1.0",
   "name": "evoX Toolkit",
-  "description": "evoX Toolkit — yerel T1 geliştirme plugini.",
-  "version": "0.1.0",
-  "runtime": {
-    "kind": "trusted-node",
-    "entry": "runtime.mjs"
-  },
-  "hostCompatibility": {
-    "minimumVersion": "0.2.0"
-  },
-  "permissions": [
-    {
-      "name": "key.display"
-    }
-  ],
+  "version": "1.0.0",
+  "runtime": { "kind": "trusted-node", "entry": "runtime.mjs" },
+  "hostCompatibility": { "minimumVersion": "0.2.0" },
+  "permissions": [{ "name": "key.display" }],
   "settingsSchema": [],
   "actions": [
-    {
-      "id": "hello",
-      "name": "Merhaba",
-      "description": "Tuşa basınca saati yazar.",
-      "controllers": [
-        "Keypad"
-      ],
-      "supportedInMultiActions": false,
-      "settingsSchema": []
-    }
+    { "id": "counter", "name": "Sayaç", "controllers": ["Keypad"], "supportedInMultiActions": false, "settingsSchema": [] },
+    { "id": "weather", "name": "Hava", "controllers": ["Keypad"], "supportedInMultiActions": false,
+      "settingsSchema": [{ "key": "city", "type": "text", "label": "Şehir", "required": true }] },
+    { "id": "sys-cpu", "name": "CPU", "controllers": ["Keypad"], "supportedInMultiActions": false,
+      "settingsSchema": [{ "key": "interval", "type": "number", "label": "Güncelleme (sn)", "default": 3 }] },
+    { "id": "sys-gpu", "name": "GPU", "controllers": ["Keypad"], "supportedInMultiActions": false,
+      "settingsSchema": [{ "key": "interval", "type": "number", "label": "Güncelleme (sn)", "default": 3 }] },
+    { "id": "sys-ram", "name": "RAM", "controllers": ["Keypad"], "supportedInMultiActions": false,
+      "settingsSchema": [{ "key": "interval", "type": "number", "label": "Güncelleme (sn)", "default": 3 }] },
+    { "id": "sys-disk", "name": "Disk", "controllers": ["Keypad"], "supportedInMultiActions": false,
+      "settingsSchema": [{ "key": "interval", "type": "number", "label": "Güncelleme (sn)", "default": 3 }] },
+    { "id": "hotkey", "name": "Hotkey", "controllers": ["Keypad"], "supportedInMultiActions": false,
+      "settingsSchema": [
+        { "key": "capture", "type": "select", "label": "Kayıt yöntemi", "default": "preset",
+          "options": [{ "value": "preset", "label": "Hazır listesinden seç" }, { "value": "record", "label": "Tuş basarak kaydet" }] },
+        { "key": "preset", "type": "select", "label": "Kısayol", "default": "Win+Shift+S",
+          "options": [
+            { "value": "Win+Shift+S", "label": "Win + Shift + S" },
+            { "value": "Win+V", "label": "Win + V" },
+            { "value": "Ctrl+Shift+Esc", "label": "Ctrl + Shift + Esc" },
+            { "value": "Alt+Tab", "label": "Alt + Tab" },
+            { "value": "Ctrl+C", "label": "Ctrl + C" },
+            { "value": "Win+L", "label": "Win + L" },
+            { "value": "Ctrl+Shift+K", "label": "Ctrl + Shift + K" },
+            { "value": "PrintScreen", "label": "PrintScreen" },
+            { "value": "Win+E", "label": "Win + E" }] },
+        { "key": "hotkey", "type": "hotkey", "label": "Kaydedilen kısayol" }] },
+    { "id": "type-text", "name": "Metin Yaz", "controllers": ["Keypad"], "supportedInMultiActions": false,
+      "settingsSchema": [
+        { "key": "text", "type": "text", "label": "Metin" },
+        { "key": "pasteMode", "type": "toggle", "label": "Pano + yapıştır modu", "default": true }] },
+    { "id": "clipboard", "name": "Pano", "controllers": ["Keypad"], "supportedInMultiActions": false,
+      "settingsSchema": [
+        { "key": "mode", "type": "select", "label": "Mod", "default": "copy",
+          "options": [{ "value": "copy", "label": "Kopyala" }, { "value": "paste", "label": "Yapıştır" }] },
+        { "key": "preview", "type": "toggle", "label": "Önizleme", "default": true }] },
+    { "id": "open-url", "name": "URL Aç", "controllers": ["Keypad"], "supportedInMultiActions": false,
+      "settingsSchema": [{ "key": "url", "type": "url", "label": "Adres", "required": true }] },
+    { "id": "spotify", "name": "Spotify", "controllers": ["Keypad"], "supportedInMultiActions": false,
+      "settingsSchema": [
+        { "key": "clientId", "type": "secret", "label": "Spotify Client ID" },
+        { "key": "clientSecret", "type": "secret", "label": "Spotify Client Secret" },
+        { "key": "refreshToken", "type": "secret", "label": "Spotify Refresh Token" },
+        { "key": "mode", "type": "select", "label": "Mod", "default": "toggle-play",
+          "options": [
+            { "value": "toggle-play", "label": "Çal/Durdur" },
+            { "value": "next", "label": "Sonraki" },
+            { "value": "prev", "label": "Önceki" },
+            { "value": "like", "label": "Beğen" },
+            { "value": "mute", "label": "Sessiz" }] }] },
+    { "id": "spotify-volume", "name": "Spotify Ses", "controllers": ["Knob", "Keypad"], "supportedInMultiActions": false,
+      "settingsSchema": [
+        { "key": "clientId", "type": "secret", "label": "Spotify Client ID" },
+        { "key": "clientSecret", "type": "secret", "label": "Spotify Client Secret" },
+        { "key": "refreshToken", "type": "secret", "label": "Spotify Refresh Token" }] }
   ]
 }

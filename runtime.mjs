@@ -1,20 +1,31 @@
 import { EvoxPluginClient } from '@evoxapp/plugin-sdk';
 import { createNodeProcessIpcPluginTransport } from '@evoxapp/plugin-sdk/node';
+import { registerCounter } from './src/actions/counter.js';
+import { registerWeather } from './src/actions/weather.js';
+import { registerSysmon } from './src/actions/sysmon.js';
+import { registerHotkey } from './src/actions/hotkey.js';
+import { registerClipboard } from './src/actions/clipboard.js';
+import { registerOpenUrl } from './src/actions/openurl.js';
+import { registerSpotify } from './src/actions/spotify.js';
 
 const client = new EvoxPluginClient(createNodeProcessIpcPluginTransport(), {
   sdkVersion: '0.1.0',
-  onError: (error) => console.error('[sdk] ' + String(error?.message || error?.code || 'Bilinmeyen hata')),
+  onError: (error) => console.error('[sdk]', String(error?.message || error?.code || 'Bilinmeyen hata')),
 });
 
-client.on('action.willAppear', async (event) => {
-  if (event.context?.actionId !== 'hello') return;
-  await client.setTitle(event.context.bindingInstanceId, 'Merhaba');
-});
+registerCounter(client);
+registerWeather(client);
+registerSysmon(client);
+registerHotkey(client);
+registerClipboard(client);
+registerOpenUrl(client);
+registerSpotify(client);
 
-client.on('action.keyDown', async (event) => {
-  if (event.context?.actionId !== 'hello') return;
-  await client.setTitle(event.context.bindingInstanceId, new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }));
-  await client.showSuccess(event.context.bindingInstanceId);
+let stopped = false;
+client.on('plugin.stop', async () => {
+  if (stopped) return;
+  stopped = true;
+  try { client.dispose(); } catch { /* ignore */ }
 });
 
 await client.start();
