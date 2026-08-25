@@ -52,3 +52,18 @@ test('getClipboard reads raw', async () => {
   const layer = createWindowsLayer({ exec: async () => 'content' });
   assert.equal(await layer.getClipboard(), 'content');
 });
+
+test('sendCombo returns false when exec resolves null', async () => {
+  const layer = createWindowsLayer({ exec: async () => null });
+  assert.equal(await layer.sendCombo('Ctrl+Shift+S'), false);
+});
+
+test('setClipboard returns false when exec resolves null', async () => {
+  const layer = createWindowsLayer({ exec: async () => null });
+  assert.equal(await layer.setClipboard('hello'), false);
+});
+
+test('openExternal returns false when exec resolves null', async () => {
+  const layer = createWindowsLayer({ exec: async () => null });
+  assert.equal(await layer.openExternal('https://example.com'), false);
+});

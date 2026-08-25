@@ -11,9 +11,9 @@ export function execPs(script, { inputBase64 } = {}) {
     let out = '';
     child.stdout.setEncoding('utf8');
     child.stdout.on('data', (d) => { out += d; });
-    const kill = setTimeout(() => { try { child.kill(); } catch {} resolve(''); }, PS_TIMEOUT);
-    child.on('close', (code) => { clearTimeout(kill); resolve(code === 0 ? out : ''); });
-    child.on('error', () => { clearTimeout(kill); resolve(''); });
+    const kill = setTimeout(() => { try { child.kill(); } catch {} resolve(null); }, PS_TIMEOUT);
+    child.on('close', (code) => { clearTimeout(kill); resolve(code === 0 ? out : null); });
+    child.on('error', () => { clearTimeout(kill); resolve(null); });
     if (inputBase64 != null) {
       child.stdin.write(`$in = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${inputBase64}'))\n`);
     }
