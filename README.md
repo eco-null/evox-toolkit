@@ -2,7 +2,9 @@
 
 evoX **T1 (trusted-node)** yerel geliştirme plugini. Ayrı bir Node process olarak çalışır ve 12 aksiyon sunar.
 
-> ⚠️ **T1 sandbox DEĞİLDİR.** Bu plugin Windows kullanıcı hesabınızın erişebildiği dosya/ağ/uygulamalara erişebilir (ör. panoya, hotspot kayıtlarına, Spotify hesabınıza). Yalnız kaynağını bildiğiniz kodu çalıştırın.
+> ⚠️ **T1 sandbox DEĞİLDİR.** Bu plugin Windows kullanıcı hesabınızın erişebildiği dosya/ağ/uygulamalara erişebilir. Yalnız kaynağını bildiğiniz kodu çalıştırın.
+
+> ℹ️ **Yayın durumu:** Bu proje T1 (yerel geliştirme) hedeflidir. evoX Developer SDK'daki public executable plugin yükleme hattı şu an kapalıdır (`PLUGIN_UPLOAD_NOT_READY`). Bu repo kaynak paylaşımı içindir; evoX **Eklentiler → Geliştirici** penceresiyle kendi makinende çalıştırılır. Detay: evoX SDK "Dağıtım durumu" sayfası.
 
 ## Aksiyonlar
 
