@@ -34,7 +34,9 @@ test('knob volume clamps and writes %title', async () => {
   const log = [];
   client.getSettings = async () => ({ refreshToken: 'rt' });
   registerSpotify(client, {
-    makeClient: () => makeApi(log),
+    makeClient: () => makeApi(log, {
+      'GET /me/player': { ok: true, status: 200, json: { device: { volume_percent: 20 } } },
+    }),
     fetchImpl: async () => ({ ok: true, arrayBuffer: async () => new Uint8Array([0]) }),
     resize: async (b) => ({ mimeType: 'image/jpeg', dataBase64: 'x' }),
   });
@@ -42,7 +44,40 @@ test('knob volume clamps and writes %title', async () => {
   await client.emit('action.dialRotate', { context: ctx, payload: { delta: 10 } });
   assert.ok(client.calls.setTitle.length >= 1);
   assert.ok(log.some(([m, p]) => p.includes('volume')));
-  assert.deepEqual(client.calls.setTitle.at(-1), ['b1', '%10']);
+  assert.deepEqual(client.calls.setTitle.at(-1), ['b1', '%30']);
+});
+
+test('like saves current track via PUT /me/tracks with query ids', async () => {
+  const client = makeFakeClient();
+  const log = [];
+  client.getSettings = async () => ({ mode: 'like', refreshToken: 'rt' });
+  registerSpotify(client, {
+    makeClient: () => makeApi(log, {
+      'GET /me/player/currently-playing': { ok: true, status: 200, json: { item: { id: 't123' } } },
+    }),
+    fetchImpl: async () => ({ ok: true, arrayBuffer: async () => new Uint8Array([0]) }),
+    resize: async (b) => ({ mimeType: 'image/jpeg', dataBase64: 'x' }),
+  });
+  await client.emit('action.keyDown', { context: { actionId: 'spotify', bindingInstanceId: 'b1' } });
+  assert.ok(log.some(([m, p, o]) => m === 'PUT' && p === '/me/tracks' && o?.query?.ids === 't123'));
+  assert.equal(client.calls.showSuccess.length, 1);
+});
+
+test('spotify-volume dialDown mutes via volume 0 and shows success', async () => {
+  const client = makeFakeClient();
+  const log = [];
+  client.getSettings = async () => ({ refreshToken: 'rt' });
+  registerSpotify(client, {
+    makeClient: () => makeApi(log, {
+      'GET /me/player': { ok: true, status: 200, json: { device: { volume_percent: 30, is_muted: false } } },
+    }),
+    fetchImpl: async () => ({ ok: true, arrayBuffer: async () => new Uint8Array([0]) }),
+    resize: async (b) => ({ mimeType: 'image/jpeg', dataBase64: 'x' }),
+  });
+  const ctx = { actionId: 'spotify-volume', bindingInstanceId: 'b1' };
+  await client.emit('action.dialDown', { context: ctx });
+  assert.ok(log.some(([m, p, o]) => m === 'PUT' && p === '/me/player/volume' && o?.query?.volume_percent === 0));
+  assert.equal(client.calls.showSuccess.length, 1);
 });
 
 test('fetchArtwork returns null on failure', async () => {

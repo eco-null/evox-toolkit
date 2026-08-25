@@ -26,16 +26,36 @@ export async function fetchArtwork(imageUrl, { fetchImpl = globalThis.fetch, res
   }
 }
 
+async function muteToggle(api, id, store) {
+  const r = await api.callApi('GET', '/me/player');
+  const cur = Number(r.json?.device?.volume_percent) || 0;
+  const volume = cur > 0 ? 0 : (store.get(id) ?? 50);
+  if (cur > 0) store.set(id, cur);
+  const res = await api.callApi('PUT', '/me/player/volume', { query: { volume_percent: volume } });
+  return { volume, res };
+}
+
+const spotifyError = () => Object.assign(new Error('spotify isteği başarısız'), { code: 'SPOTIFY' });
+
 const MODE_ACTIONS = {
   'toggle-play': async (api) => {
     const r = await api.callApi('GET', '/me/player');
-    const playing = !!r.json?.is_playing;
+    const playing = !!(r.ok && r.json?.is_playing);
     return api.callApi('POST', playing ? '/me/player/pause' : '/me/player/play');
   },
   next: (api) => api.callApi('POST', '/me/player/next'),
   prev: (api) => api.callApi('POST', '/me/player/previous'),
-  like: (api) => api.callApi('PUT', '/me/tracks', {}),
-  mute: (api) => api.callApi('PUT', '/me/player/volume', { query: { volume_percent: 0 } }),
+  like: async (api) => {
+    const r = await api.callApi('GET', '/me/player/currently-playing');
+    const trackId = r.json?.item?.id;
+    if (!trackId) throw Object.assign(new Error('çalınan parça yok'), { code: 'SPOTIFY' });
+    return api.callApi('PUT', '/me/tracks', { query: { ids: trackId } });
+  },
+  mute: async (api, { id, client, muteVolumes }) => {
+    const { volume, res } = await muteToggle(api, id, muteVolumes);
+    if (res.ok) await client.setTitle(id, volume === 0 ? 'Sessiz' : `%${volume}`);
+    return res;
+  },
 };
 
 export function registerSpotify(
@@ -44,6 +64,7 @@ export function registerSpotify(
 ) {
   const timers = new Map();
   const covers = new Map();
+  const muteVolumes = new Map();
 
   const settingsFor = (id) => client.getSettings(id);
   const buildClient = (s) => makeClient({
@@ -87,7 +108,8 @@ export function registerSpotify(
       const mode = s?.mode ?? 'toggle-play';
       const run = MODE_ACTIONS[mode];
       if (!run) { await client.showError(id); return; }
-      await run(api);
+      const res = await run(api, { id, client, muteVolumes });
+      if (!res.ok) throw spotifyError();
       if (mode === 'toggle-play') await runningState(id);
       await client.showSuccess(id);
     } catch (err) {
@@ -103,10 +125,20 @@ export function registerSpotify(
       const delta = Number(event.payload?.delta) || (event.payload?.direction === 'LEFT' ? -10 : 10);
       const s = await settingsFor(id);
       const api = buildClient(s);
-      const r = await api.callApi('GET', '/me/player');
-      const cur = Number(r.json?.device?.volume_percent) || 0;
+      let r = await api.callApi('GET', '/me/player');
+      if (!r.ok || !r.json?.device) {
+        const dev = await api.callApi('GET', '/me/player/devices');
+        const deviceId = dev.json?.devices?.[0]?.id;
+        if (dev.ok && deviceId) {
+          await api.callApi('POST', '/me/player/transfer-playback', { body: { device_ids: [deviceId], play: false } });
+          r = await api.callApi('GET', '/me/player');
+        }
+      }
+      if (!r.ok || !r.json?.device) throw Object.assign(new Error('etkin cihaz yok'), { code: 'SPOTIFY' });
+      const cur = Number(r.json.device.volume_percent) || 0;
       const v = clamp(cur + delta, 0, 100);
-      await api.callApi('PUT', '/me/player/volume', { query: { volume_percent: v } });
+      const put = await api.callApi('PUT', '/me/player/volume', { query: { volume_percent: v } });
+      if (!put.ok) throw spotifyError();
       await client.setTitle(id, `%${v}`);
     } catch (err) {
       if (decodeError(err).silent) return;
@@ -120,9 +152,9 @@ export function registerSpotify(
     try {
       const s = await settingsFor(id);
       const api = buildClient(s);
-      const r = await api.callApi('GET', '/me/player');
-      const muted = !!(r.json?.device?.is_muted);
-      await api.callApi('PUT', '/me/player/mute', { query: { state: String(!muted) } });
+      const { volume, res } = await muteToggle(api, id, muteVolumes);
+      if (!res.ok) throw spotifyError();
+      await client.setTitle(id, volume === 0 ? 'Sessiz' : `%${volume}`);
       await client.showSuccess(id);
     } catch (err) {
       if (decodeError(err).silent) return;
