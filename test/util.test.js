@@ -1,25 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { clamp, fmtBytes, safeTitle, decodeError, forAction, timedTask } from '../src/util.js';
+import { clamp, createLogger, decodeError, forAction } from '../src/util.js';
 
 test('clamp bounds', () => {
   assert.equal(clamp(5, 0, 10), 5);
   assert.equal(clamp(-2, 0, 10), 0);
   assert.equal(clamp(12, 0, 10), 10);
-});
-
-test('fmtBytes units', () => {
-  assert.equal(fmtBytes(512), '512 B');
-  assert.equal(fmtBytes(2048), '2.0 KB');
-  assert.equal(fmtBytes(16 * 1024 ** 2), '16.0 MB');
-  assert.equal(fmtBytes(16.25 * 1024 ** 3), '16.3 GB');
-  assert.equal(fmtBytes(-5), '—');
-});
-
-test('safeTitle preserves newlines and truncates', () => {
-  assert.equal(safeTitle('a\nb'), 'a\nb');
-  assert.equal(safeTitle('x'.repeat(70)).length, 61);
-  assert.equal(safeTitle('x'.repeat(70)).endsWith('…'), true);
 });
 
 test('decodeError silent for expired codes', () => {
@@ -36,14 +22,17 @@ test('forAction filters by actionId', async () => {
   assert.equal(calls, 1);
 });
 
-test('timedTask stops on stop()', async () => {
-  let calls = 0;
-  const task = timedTask(async () => { calls++; }, 20);
-  task.start();
-  await new Promise((r) => setTimeout(r, 90));
-  task.stop();
-  const n = calls;
-  assert.ok(n >= 2);
-  await new Promise((r) => setTimeout(r, 60));
-  assert.equal(calls, n);
+test('createLogger writes each key at most once per minute and caps line length', () => {
+  const lines = [];
+  let clock = 0;
+  const log = createLogger((line) => lines.push(line), () => clock);
+  log('sdk', { code: 'RATE_LIMITED', message: 'slow down' });
+  log('sdk', new Error('again'));
+  log('weather', new Error('x'.repeat(1000)));
+  assert.equal(lines.length, 2);
+  assert.match(lines[0], /\[toolkit\] sdk: RATE_LIMITED slow down/);
+  assert.ok(lines[1].length <= 300);
+  clock = 60_000;
+  log('sdk', new Error('later'));
+  assert.equal(lines.length, 3);
 });

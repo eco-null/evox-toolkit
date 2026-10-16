@@ -1,7 +1,7 @@
-import { forAction, decodeError } from '../util.js';
-import { createWindowsLayer } from '../windows.js';
+import { forAction, decodeError, createLogger } from '../util.js';
 
-export function registerHotkey(client, { win = createWindowsLayer() } = {}) {
+// win: windows.js katmanı (runtime ilk kullanımda tembel yükler; testler sahte verir).
+export function registerHotkey(client, { win, log = createLogger() }) {
   const hotkeyDown = forAction('send-hotkey')(async (event) => {
     const id = event.context.bindingInstanceId;
     try {
@@ -22,7 +22,7 @@ export function registerHotkey(client, { win = createWindowsLayer() } = {}) {
           .map((v) => (typeof v === 'string' ? v.trim() : '')).filter(Boolean)[0] ?? '';
       }
       if (!combo) {
-        console.error('[hotkey] settings keys:', Object.keys(settings || {}).length ? Object.keys(settings).join(',') : 'BOŞ');
+        log('hotkey:settings', `settings keys: ${Object.keys(settings || {}).join(',') || 'BOŞ'}`);
         await client.showError(id);
         return;
       }
@@ -30,7 +30,7 @@ export function registerHotkey(client, { win = createWindowsLayer() } = {}) {
       if (ok) await client.showSuccess(id); else await client.showError(id);
     } catch (err) {
       if (decodeError(err).silent) return;
-      console.error('[hotkey]', err?.message || err);
+      log('hotkey', err);
       try { await client.showError(id); } catch { /* ignore */ }
     }
   });
@@ -46,7 +46,7 @@ export function registerHotkey(client, { win = createWindowsLayer() } = {}) {
       if (ok) await client.showSuccess(id); else await client.showError(id);
     } catch (err) {
       if (decodeError(err).silent) return;
-      console.error('[type-text]', err?.message || err);
+      log('type-text', err);
       try { await client.showError(id); } catch { /* ignore */ }
     }
   });

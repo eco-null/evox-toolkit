@@ -1,6 +1,8 @@
 # evoX Toolkit
 
-evoX **T1 (trusted-node)** yerel geliştirme plugini. Ayrı bir Node process olarak çalışır ve 12 aksiyon sunar.
+evoX **T1 (trusted-node)** yerel geliştirme plugini. Ayrı bir Node process olarak çalışır ve 6 aksiyon sunar.
+
+> CPU / GPU / RAM / Disk izleme v2.0.0 ile bu pluginden çıkarıldı; ayrı **evoX Kaynak İzleyici** (`evox-sysmon`) plugini bunları sunar.
 
 > ⚠️ **T1 sandbox DEĞİLDİR.** Bu plugin Windows kullanıcı hesabınızın erişebildiği dosya/ağ/uygulamalara erişebilir. Yalnız kaynağını bildiğiniz kodu çalıştırın.
 
@@ -12,11 +14,6 @@ evoX **T1 (trusted-node)** yerel geliştirme plugini. Ayrı bir Node process ola
 |---|---|---|
 | Sayaç | Tuşa her basışta sayacı artırır, ekranda gösterir | Keypad |
 | Hava | wttr.in tabanlı hava durumu ve sıcaklık gösterir | Keypad |
-| CPU | CPU sıcaklık + kullanım, büyük alt alta | Keypad |
-| GPU | GPU sıcaklık + kullanım, büyük alt alta | Keypad |
-| RAM | Kullanılan ve toplam RAM, iki satır (örn. `12.9GB` / `32GB`) | Keypad |
-| Disk | Tüm sürücüler döner; harf üstte, boş alan altta (örn. `C:` / `166GB`) | Keypad |
-| Disk Seç | Seçilen tek sürücü (ayar: harf, örn. `E`); aynı iki satır düzen | Keypad |
 | Hotkey | Sistem kısayolunu (kombinasyon) tetikler; ayara elle yazılır | Keypad |
 | Metin Yaz | Metni yazar veya panoya kopyalayıp yapıştırır | Keypad |
 | Pano | Panodan kopyalar veya panodaki metni yapıştırır | Keypad |
@@ -26,9 +23,12 @@ evoX **T1 (trusted-node)** yerel geliştirme plugini. Ayrı bir Node process ola
 
 ```bash
 npm install
+npm test
 ```
 
-Bağımlılıklar: `@evoxapp/plugin-sdk`, `systeminformation`, `sharp`.
+Bağımlılıklar: `@evoxapp/plugin-sdk` 0.2.0 (manifestteki `sdkVersion` ile aynı olmalı; runtime değeri manifestten okur), `sharp`.
+
+Host plugini `evoX.exe` ile fork eder ve **5 sn** içinde handshake bekler. Bu yüzden `runtime.mjs` yalnız hafif modülleri yükler: `sharp` ilk tuş çiziminde, PowerShell/SendInput katmanı (`src/windows.js`) ilk basışta yüklenir (`test/plugin.test.js` bunu denetler). Host hataları (`RATE_LIMITED`, `CONTEXT_EXPIRED`) süreci düşürmez; aynı hata dakikada bir kez loglanır. Host, 5 dk içinde 3'ten fazla çöken ya da dakikada 1 MiB'tan fazla log yazan plugini kapatır.
 
 ## evoX'e yükleme
 
@@ -43,7 +43,6 @@ Kod değişikliğinden sonra Geliştirici penceresinden **yeniden yükle** kulla
 ## Aksiyon bazlı kurulum notları
 
 - **Hava**: Aksiyon ayarlarında **Şehir** alanı zorunludur; tuşta sıcaklık (üstte) ve nem yüzdesi (altta) büyük gösterilir. **Yenileme (dk)** alanıyla güncelleme aralığı seçilir (varsayılan 30 dk); tuş basılınca anında yenilenir.
-- **Sistem panelleri (CPU/GPU/RAM/Disk/Disk Seç)**: Aksiyon ayarlarındaki **Güncelleme (sn)** alanıyla panel yenileme aralığını seçebilirsiniz (varsayılan 3 sn). Paneller tuş üzerinde **büyük iki satır görsel** olarak çizilir (v1.2+). CPU sıcaklığı [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor)'dan okunur: LHM'i çalıştırın → **Options → Remote Web Server** açın → CPU aksiyonunun veri adresi alanı `http://localhost:8085/data.json` ile dolu gelir (boşsa otomatik denenir). GPU önce `nvidia-smi`, yoksa si.graphics(), yoksa LHM kullanılır. **Disk Seç** aksiyonunda sürücü harfi ayarı (`C` varsayılan) hangi sürücüyü göstereceğini belirler.
 - **Hotkey**: Modifier **dropdown**'ından (Ctrl / Shift / Alt / Win ve komboları) seç, **Tuş** alanına basacağın tuşu yaz (`D`, `F5`, `Tab`); veya **Kısayol elle** alanına tam kombinasyon yaz (`Ctrl+Shift+D`). Host'un kendi kayıt alanından gelen değerler de otomatik denenir. Ayarlar hiç dönmüyorsa log `[hotkey] settings keys: ...` ile görünür.
 - **URL Aç**: Adres alanı zorunludur; yalnızca `http`/`https` protokolleri kabul edilir.
 
@@ -54,3 +53,4 @@ Kod değişikliğinden sonra Geliştirici penceresinden **yeniden yükle** kulla
 | Plugin başlatılamıyor | Geliştirici penceresinden logları açın; `npm install` yapıldığından emin olun. |
 | Aksiyon görünmüyor | Aksiyonun desteklediği controllers (`Keypad`/`Knob`) tuşunuzla uyumlu mu kontrol edin. |
 | Handshake timeout | `runtime.mjs` içinde `client.start()` çağrılıyor mu; node_modules kurulu mu kontrol edin. |
+| "Tekrarlanan hatalar nedeniyle kapatıldı" | Host plugini kapatmış. Düzeltmeden sonra **Eklentiler** ekranından plugini yeniden etkinleştirin / yeniden yükleyin. |

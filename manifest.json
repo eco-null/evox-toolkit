@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "pluginId": "01508eca-7af1-4dbf-8869-226e4cec4896",
-  "sdkVersion": "0.1.0",
+  "sdkVersion": "0.2.0",
   "name": "evoX Toolkit",
-  "version": "1.6.0",
+  "version": "2.0.0",
   "runtime": { "kind": "trusted-node", "entry": "runtime.mjs" },
   "hostCompatibility": { "minimumVersion": "0.2.0" },
   "permissions": [{ "name": "key.display" }],
@@ -14,20 +14,6 @@
       "settingsSchema": [
         { "key": "city", "type": "text", "label": "Şehir", "required": true },
         { "key": "interval", "type": "text", "label": "Yenileme (dk) — varsayılan 30", "default": "30" }] },
-    { "id": "sys-cpu", "name": "CPU", "description": "evoX Toolkit: LHM sıcaklık + kullanım", "controllers": ["Keypad"], "supportedInMultiActions": false,
-      "settingsSchema": [
-        { "key": "interval", "type": "text", "label": "Güncelleme (sn) — varsayılan 3", "default": "3" },
-        { "key": "lhmUrl", "type": "url", "label": "LibreHardwareMonitor veri adresi (CPU sıcaklığı için, opsiyonel)", "default": "http://localhost:8085/data.json" }] },
-    { "id": "sys-gpu", "name": "GPU", "description": "evoX Toolkit: sıcaklık + kullanım", "controllers": ["Keypad"], "supportedInMultiActions": false,
-      "settingsSchema": [{ "key": "interval", "type": "text", "label": "Güncelleme (sn) — varsayılan 3", "default": "3" }] },
-    { "id": "sys-ram", "name": "RAM", "description": "evoX Toolkit: kullanılan/toplam", "controllers": ["Keypad"], "supportedInMultiActions": false,
-      "settingsSchema": [{ "key": "interval", "type": "text", "label": "Güncelleme (sn) — varsayılan 3", "default": "3" }] },
-    { "id": "sys-disk", "name": "Disk", "description": "evoX Toolkit: tüm sürücüler döner", "controllers": ["Keypad"], "supportedInMultiActions": false,
-      "settingsSchema": [{ "key": "interval", "type": "text", "label": "Güncelleme (sn) — varsayılan 3", "default": "3" }] },
-    { "id": "sys-disk-pick", "name": "Disk Seç", "description": "evoX Toolkit: seçilen tek sürücü", "controllers": ["Keypad"], "supportedInMultiActions": false,
-      "settingsSchema": [
-        { "key": "drive", "type": "text", "label": "Sürücü harfi (ör. C)", "default": "C" },
-        { "key": "interval", "type": "text", "label": "Güncelleme (sn) — varsayılan 3", "default": "3" }] },
     { "id": "send-hotkey", "name": "Hotkey", "description": "evoX Toolkit: modifier dropdown + tuş alanı", "controllers": ["Keypad"], "supportedInMultiActions": false,
       "settingsSchema": [
         { "key": "mods", "type": "select", "label": "Modifier", "default": "none",

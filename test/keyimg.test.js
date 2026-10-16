@@ -46,3 +46,20 @@ test('renderKey falls back to title on png failure', async () => {
   assert.equal(ok, false);
   assert.deepEqual(client.calls.setTitle[0], ['b1', '74°C\n62%']);
 });
+
+test('renderKey skips the frame when the host is rate limiting', async () => {
+  const client = makeFakeClient();
+  client.setImage = async () => { throw Object.assign(new Error('slow'), { code: 'RATE_LIMITED' }); };
+  const ok = await renderKey(client, 'b1', [{ text: '1' }], { png: async (svg) => Buffer.from(svg) });
+  assert.equal(ok, false);
+  assert.equal(client.calls.setTitle.length, 0);
+});
+
+test('renderKey rethrows CONTEXT_EXPIRED so the caller can stop', async () => {
+  const client = makeFakeClient();
+  client.setImage = async () => { throw Object.assign(new Error('gone'), { code: 'CONTEXT_EXPIRED' }); };
+  await assert.rejects(
+    renderKey(client, 'b1', [{ text: '1' }], { png: async (svg) => Buffer.from(svg) }),
+    { code: 'CONTEXT_EXPIRED' },
+  );
+});

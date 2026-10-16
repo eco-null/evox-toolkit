@@ -1,12 +1,16 @@
 {
   "name": "evox-toolkit",
   "private": true,
-  "version": "0.1.0",
+  "version": "2.0.0",
   "type": "module",
-  "description": "evoX Toolkit — evoX T1 (trusted-node) yerel geliştirme plugini.",
+  "description": "evoX Toolkit — evoX T1 (trusted-node) yerel plugin: sayaç, hava, hotkey, metin, pano, URL.",
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test"
+  },
   "dependencies": {
-    "@evoxapp/plugin-sdk": "^0.1.0",
-    "sharp": "^0.35.3",
-    "systeminformation": "^5.33.2"
+    "@evoxapp/plugin-sdk": "0.2.0",
+    "sharp": "^0.35.5"
   }
 }

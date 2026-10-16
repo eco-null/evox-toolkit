@@ -1,7 +1,7 @@
-import { forAction, decodeError } from '../util.js';
-import { createWindowsLayer } from '../windows.js';
+import { forAction, decodeError, createLogger } from '../util.js';
 
-export function registerClipboard(client, { win = createWindowsLayer() } = {}) {
+// win: windows.js katmanı (runtime ilk kullanımda tembel yükler; testler sahte verir).
+export function registerClipboard(client, { win, log = createLogger() }) {
   const values = new Map();
 
   const handler = forAction('clipboard')(async (event) => {
@@ -22,7 +22,7 @@ export function registerClipboard(client, { win = createWindowsLayer() } = {}) {
       await client.showSuccess(id);
     } catch (err) {
       if (decodeError(err).silent) return;
-      console.error('[clipboard]', err?.message || err);
+      log('clipboard', err);
       try { await client.showError(id); } catch { /* ignore */ }
     }
   });

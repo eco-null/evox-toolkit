@@ -1,55 +1,91 @@
-import { forAction, decodeError, timedTask, clamp } from '../util.js';
+// Hava: wttr.in'den sıcaklık + nem. Tuş göründüğünde ve ayar aralığında (dk) bir kez çeker,
+// basınca hemen yeniler. Tuş kaybolunca (CONTEXT_EXPIRED dahil) zamanlayıcı kalkar.
+import { forAction, decodeError, clamp, createLogger } from '../util.js';
 import { renderKey } from '../keyimg.js';
 
-export function registerWeather(client, { fetchImpl = globalThis.fetch, png } = {}) {
-  const tasks = new Map();
+const FETCH_TIMEOUT_MS = 10_000;
 
-  const stopBind = (id) => {
-    const t = tasks.get(id);
-    if (t) { t.stop(); tasks.delete(id); }
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+export function intervalMinutes(settings) {
+  return clamp(Number(settings?.interval) || 30, 1, 24 * 60);
+}
+
+export function weatherRows(text) {
+  const [temp, humidity] = String(text).trim().split('|').map((s) => s.trim());
+  const rows = [{ text: temp || '°', color: '#9adcff', size: 34 }];
+  if (humidity) rows.push({ text: humidity, size: 26 });
+  return rows;
+}
+
+export function registerWeather(client, { fetchImpl = globalThis.fetch, png, log = createLogger() } = {}) {
+  const bindings = new Map();
+
+  const stop = (id) => {
+    const b = bindings.get(id);
+    if (!b) return;
+    b.stopped = true;
+    clearInterval(b.timer);
+    bindings.delete(id);
   };
 
-  const startBind = async (event) => {
-    const id = event.context.bindingInstanceId;
-    stopBind(id);
-    const b = { lastFetch: 0, rows: null, intervalMs: 30 * 60 * 1000 };
+  const title = async (b, text) => {
+    await client.setTitle(b.id, text);
+    b.titled = text !== '';
+  };
 
-    const tick = async () => {
-      const settings = await client.getSettings(id).catch(() => ({}));
-      const city = String(settings?.city ?? '').trim();
-      b.intervalMs = (clamp(Number(settings?.interval) || 30, 1, 24 * 60)) * 60 * 1000;
-      if (!city) {
-        b.rows = null;
-        await client.setTitle(id, 'Şehir seçin');
+  async function refresh(b) {
+    if (b.busy || b.stopped) return;
+    b.busy = true;
+    try {
+      if (!b.city) { await title(b, 'Şehir seçin'); return; }
+      let rows;
+      try {
+        const res = await fetchImpl(`https://wttr.in/${encodeURIComponent(b.city)}?format=%t|%h`, {
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        });
+        if (!res.ok) throw new Error(`wttr.in HTTP ${res.status}`);
+        rows = weatherRows(await res.text());
+      } catch (err) {
+        log('weather:fetch', err);
+        if (b.stopped) return;
+        await title(b, '—');
+        await client.showError(b.id);
         return;
       }
-      if (Date.now() - b.lastFetch >= b.intervalMs) {
-        try {
-          const res = await fetchImpl(`https://wttr.in/${encodeURIComponent(city)}?format=%t|%h`);
-          if (!res.ok) throw new Error('weather fetch failed');
-          const text = String(await res.text()).trim();
-          const [temp, humidity] = text.split('|').map((s) => s.trim());
-          b.rows = [{ text: temp || '°', color: '#9adcff', size: 34 }];
-          if (humidity) b.rows.push({ text: humidity, size: 26 });
-          b.lastFetch = Date.now();
-        } catch (err) {
-          b.rows = null;
-          try { await client.setTitle(id, '—'); await client.showError(id); } catch { /* ignore */ }
-          if (decodeError(err).silent) return;
-          throw err;
-        }
+      if (b.stopped) return;
+      if (await renderKey(client, b.id, rows, png ? { png } : {})) {
+        if (b.titled) await title(b, '');
+      } else {
+        b.titled = true;
       }
-      if (b.rows) await renderKey(client, id, b.rows, png ? { png } : {});
-    };
+    } catch (err) {
+      if (decodeError(err).silent) stop(b.id);
+      else log('weather', err);
+    } finally {
+      b.busy = false;
+    }
+  }
 
-    try { await tick(); } catch (err) { console.error('[weather]', String(err?.message || err)); }
-    const task = timedTask(tick, 5000);
-    task.start();
-    tasks.set(id, task);
-  };
+  async function start(event) {
+    const id = event.context.bindingInstanceId;
+    stop(id);
+    const b = { id, city: '', timer: null, busy: false, stopped: false, titled: false };
+    bindings.set(id, b);
+    let settings = event.payload?.settings;
+    if (!isPlainObject(settings)) settings = await client.getSettings(id).catch(() => ({}));
+    if (b.stopped) return;
+    b.city = String(settings?.city ?? '').trim();
+    b.timer = setInterval(() => { void refresh(b); }, intervalMinutes(settings) * 60 * 1000);
+    await refresh(b);
+  }
 
-  client.on('action.willAppear', forAction('weather')(startBind));
-  client.on('action.keyDown', forAction('weather')(startBind));
-  client.on('action.settingsChanged', forAction('weather')(startBind));
-  client.on('action.willDisappear', forAction('weather')((event) => stopBind(event.context.bindingInstanceId)));
+  client.on('action.willAppear', forAction('weather')(start));
+  client.on('action.keyDown', forAction('weather')(start));
+  client.on('action.settingsChanged', forAction('weather')(start));
+  client.on('action.willDisappear', forAction('weather')((event) => stop(event.context.bindingInstanceId)));
+
+  return { bindings, stopAll() { for (const id of [...bindings.keys()]) stop(id); } };
 }

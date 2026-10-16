@@ -48,7 +48,21 @@ test('quick tap does not reset', async () => {
   await client.emit('action.willDisappear', { context: ctx });
 });
 
-test('willAppear restores last count and loop stops on disappear', async () => {
+test('host errors from setTitle never reject the handler', async () => {
+  const client = makeFakeClient();
+  const logged = [];
+  client.setTitle = async () => { throw Object.assign(new Error('x'), { code: 'RATE_LIMITED' }); };
+  registerCounter(client, { log: (key) => logged.push(key) });
+  const ctx = { actionId: 'counter', bindingInstanceId: 'b1' };
+  await client.emit('action.keyDown', { context: ctx });
+  await client.emit('action.keyUp', { context: ctx });
+  client.setTitle = async () => { throw Object.assign(new Error('x'), { code: 'CONTEXT_EXPIRED' }); };
+  await client.emit('action.keyDown', { context: ctx });
+  await new Promise((r) => setTimeout(r, 800)); // hold timer fires and its setTitle rejects too
+  assert.deepEqual(logged, ['counter']);
+});
+
+test('willAppear restores last count', async () => {
   const client = makeFakeClient();
   registerCounter(client);
   const ctx = { actionId: 'counter', bindingInstanceId: 'b1' };

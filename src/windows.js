@@ -14,6 +14,8 @@ export function execPs(script, { inputBase64 } = {}) {
     const kill = setTimeout(() => { try { child.kill(); } catch {} resolve(null); }, PS_TIMEOUT);
     child.on('close', (code) => { clearTimeout(kill); resolve(code === 0 ? out : null); });
     child.on('error', () => { clearTimeout(kill); resolve(null); });
+    // PowerShell erken kapanırsa stdin EPIPE verir; dinleyicisiz 'error' süreci düşürür.
+    child.stdin.on('error', () => {});
     if (inputBase64 != null) {
       child.stdin.write(`$in = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${inputBase64}'))\n`);
     }
@@ -66,9 +68,3 @@ export function createWindowsLayer({ exec = execPs } = {}) {
 
   return { sendCombo, getClipboard, setClipboard, typeText, openExternal };
 }
-
-export const sendCombo = (combo) => createWindowsLayer().sendCombo(combo);
-export const getClipboard = () => createWindowsLayer().getClipboard();
-export const setClipboard = (text) => createWindowsLayer().setClipboard(text);
-export const typeText = (text, opts) => createWindowsLayer().typeText(text, opts);
-export const openExternal = (url) => createWindowsLayer().openExternal(url);

@@ -63,6 +63,53 @@ test('fetch failure shows dash + showError', async () => {
   await client.emit('action.willDisappear', { context: { actionId: 'weather', bindingInstanceId: 'b1' } });
 });
 
+test('uses settings from the event payload without asking the host', async () => {
+  const client = makeFakeClient();
+  let asked = 0;
+  client.getSettings = async () => { asked++; return {}; };
+  const urls = [];
+  registerWeather(client, {
+    fetchImpl: async (url) => { urls.push(url); return { ok: true, text: async () => '+5°C|90%' }; },
+    png: async (svg) => Buffer.from(svg),
+  });
+  await client.emit('action.willAppear', { context: { actionId: 'weather', bindingInstanceId: 'b1' }, payload: { settings: { city: 'Kars' } } });
+  assert.equal(asked, 0);
+  assert.deepEqual(urls, ['https://wttr.in/Kars?format=%t|%h']);
+  await client.emit('action.willDisappear', { context: { actionId: 'weather', bindingInstanceId: 'b1' } });
+});
+
+test('CONTEXT_EXPIRED stops the binding instead of throwing', async () => {
+  const client = makeFakeClient();
+  client.getSettings = async () => ({ city: 'Izmir' });
+  client.setImage = async () => { throw Object.assign(new Error('gone'), { code: 'CONTEXT_EXPIRED' }); };
+  const logged = [];
+  const weather = registerWeather(client, {
+    fetchImpl: async () => ({ ok: true, text: async () => '+20°C|40%' }),
+    png: async (svg) => Buffer.from(svg),
+    log: (key) => logged.push(key),
+  });
+  await client.emit('action.willAppear', { context: { actionId: 'weather', bindingInstanceId: 'b1' } });
+  assert.equal(weather.bindings.size, 0);
+  assert.deepEqual(logged, []);
+});
+
+test('RATE_LIMITED frame is skipped and logged nowhere', async () => {
+  const client = makeFakeClient();
+  client.getSettings = async () => ({ city: 'Izmir' });
+  client.setImage = async () => { throw Object.assign(new Error('slow'), { code: 'RATE_LIMITED' }); };
+  const logged = [];
+  const weather = registerWeather(client, {
+    fetchImpl: async () => ({ ok: true, text: async () => '+20°C|40%' }),
+    png: async (svg) => Buffer.from(svg),
+    log: (key) => logged.push(key),
+  });
+  await client.emit('action.willAppear', { context: { actionId: 'weather', bindingInstanceId: 'b1' } });
+  assert.equal(weather.bindings.size, 1);
+  assert.deepEqual(logged, []);
+  weather.stopAll();
+  assert.equal(weather.bindings.size, 0);
+});
+
 test('does nothing for unknown actionId', async () => {
   const client = makeFakeClient();
   registerWeather(client, { fetchImpl: async () => ({}) });

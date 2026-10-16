@@ -1,7 +1,7 @@
-import { forAction, decodeError } from '../util.js';
-import { createWindowsLayer } from '../windows.js';
+import { forAction, decodeError, createLogger } from '../util.js';
 
-export function registerOpenUrl(client, { win = createWindowsLayer() } = {}) {
+// win: windows.js katmanı (runtime ilk kullanımda tembel yükler; testler sahte verir).
+export function registerOpenUrl(client, { win, log = createLogger() }) {
   const handler = forAction('open-url')(async (event) => {
     const id = event.context.bindingInstanceId;
     try {
@@ -11,7 +11,7 @@ export function registerOpenUrl(client, { win = createWindowsLayer() } = {}) {
       if (ok) await client.showSuccess(id); else await client.showError(id);
     } catch (err) {
       if (decodeError(err).silent) return;
-      console.error('[open-url]', err?.message || err);
+      log('open-url', err);
       try { await client.showError(id); } catch { /* ignore */ }
     }
   });

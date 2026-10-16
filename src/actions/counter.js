@@ -1,26 +1,15 @@
-import { forAction, timedTask } from '../util.js';
+import { forAction, decodeError, createLogger } from '../util.js';
 
 const LONG_PRESS_MS = 700;
 
-export function registerCounter(client) {
+export function registerCounter(client, { log = createLogger() } = {}) {
   const counts = new Map();
   const holdTimers = new Map();
-  const loops = new Map();
 
-  const stopLoop = (id) => {
-    const t = loops.get(id);
-    if (t) { t.stop(); loops.delete(id); }
-  };
-
-  const startLoop = (id) => {
-    stopLoop(id);
-    const loop = timedTask(async () => {
-      const n = counts.get(id);
-      if (n != null) await client.setTitle(id, String(n));
-    }, 4000);
-    loop.start();
-    loops.set(id, loop);
-  };
+  // Zamanlayıcıdan da çağrılır; host hatası hiçbir zaman yakalanmamış ret olarak kalmaz.
+  const show = (id, n) => client.setTitle(id, String(n)).catch((err) => {
+    if (!decodeError(err).silent) log('counter', err);
+  });
 
   const cancelHold = (id) => {
     const t = holdTimers.get(id);
@@ -32,16 +21,12 @@ export function registerCounter(client) {
     cancelHold(id);
     const n = Math.min((counts.get(id) ?? 0) + 1, 9999);
     counts.set(id, n);
-    await client.setTitle(id, String(n));
-    const hold = setTimeout(() => {
-      if (counts.get(id) !== null) {
-        counts.set(id, 0);
-        client.setTitle(id, '0').catch(() => {});
-      }
+    holdTimers.set(id, setTimeout(() => {
       holdTimers.delete(id);
-    }, LONG_PRESS_MS);
-    holdTimers.set(id, hold);
-    startLoop(id);
+      counts.set(id, 0);
+      void show(id, 0);
+    }, LONG_PRESS_MS));
+    await show(id, n);
   });
 
   const onUp = forAction('counter')((event) => {
@@ -51,18 +36,17 @@ export function registerCounter(client) {
   const onAppear = forAction('counter')(async (event) => {
     const id = event.context.bindingInstanceId;
     const n = counts.get(id);
-    if (n != null) await client.setTitle(id, String(n));
-    startLoop(id);
+    if (n != null) await show(id, n);
   });
 
   const onGone = forAction('counter')((event) => {
-    const id = event.context.bindingInstanceId;
-    stopLoop(id);
-    cancelHold(id);
+    cancelHold(event.context.bindingInstanceId);
   });
 
   client.on('action.keyDown', onDown);
   client.on('action.keyUp', onUp);
   client.on('action.willAppear', onAppear);
   client.on('action.willDisappear', onGone);
+
+  return { stopAll() { for (const id of [...holdTimers.keys()]) cancelHold(id); } };
 }

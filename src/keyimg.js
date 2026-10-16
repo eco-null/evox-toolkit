@@ -1,4 +1,4 @@
-import { escapeXml } from './util.js';
+import { decodeError, escapeXml } from './util.js';
 
 export function buildKeySvg(rows) {
   const items = (Array.isArray(rows) && rows.length ? rows : [{ text: '—' }])
@@ -23,19 +23,26 @@ function textSvg(item, x, y) {
   return `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-family="Segoe UI, Arial, sans-serif" fill="${item.color}">${escapeXml(item.text)}</text>`;
 }
 
+// sharp native modül; host handshake'ini (5 sn) bekletmemek için ilk çizimde yüklenir.
+let sharpModule = null;
 export async function svgToPng(svg) {
-  const sharp = (await import('sharp')).default;
+  sharpModule ??= import('sharp').then((m) => m.default);
+  const sharp = await sharpModule;
   return sharp(Buffer.from(svg)).png().toBuffer();
 }
 
+// true: görsel gönderildi. Bağlam gittiyse (CONTEXT_EXPIRED) hata çağırana döner; host hız
+// sınırındaysa (RATE_LIMITED) bu adım atlanır; diğer hatalarda metin başlığa düşer.
 export async function renderKey(client, contextId, rows, { png = svgToPng } = {}) {
   try {
     const buf = await png(buildKeySvg(rows));
     await client.setImage(contextId, { kind: 'raster', mimeType: 'image/png', dataBase64: buf.toString('base64') });
     return true;
-  } catch {
-    const text = (Array.isArray(rows) ? rows : []).map((r) => r.text).join('\n');
-    await client.setTitle(contextId, text).catch(() => {});
-    return false;
+  } catch (err) {
+    if (decodeError(err).silent) throw err;
+    if (err?.code === 'RATE_LIMITED') return false;
   }
+  const text = (Array.isArray(rows) ? rows : []).map((r) => r.text).join('\n');
+  await client.setTitle(contextId, text);
+  return false;
 }

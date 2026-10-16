@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.0.0 — 2026-10-16
+
+- **evoX 0.3.16 uyumu**: `@evoxapp/plugin-sdk` 0.2.0; manifest `sdkVersion` 0.2.0 ve runtime bu değeri manifestten okur.
+- **Kaldırıldı**: `sys-cpu`, `sys-gpu`, `sys-ram`, `sys-disk`, `sys-disk-pick` aksiyonları ve `systeminformation` bağımlılığı. Yerine ayrı **evoX Kaynak İzleyici** (`evox-sysmon`) plugini.
+- **Handshake**: PowerShell/SendInput katmanı ilk basışta, `sharp` ilk çizimde yüklenir; `runtime.mjs` statik import ağacı testle denetlenir.
+- **Kararlılık**: `unhandledRejection` loglanır; loglar anahtar başına dakikada bir kez yazılır. `CONTEXT_EXPIRED` tuşun zamanlayıcısını durdurur, `RATE_LIMITED` o kareyi atlar. PowerShell stdin EPIPE hatası artık süreci düşürmez.
+- **Hava**: 5 sn'lik yeniden çizim döngüsü kalktı; yalnız ayar aralığında ve basınca çekip çizer, 10 sn fetch zaman aşımı.
+- **Sayaç**: 4 sn'lik başlık tekrar döngüsü kalktı; uzun bas (700 ms) sıfırlama aynı.
+
 ## v1.5.0 — 2026-08-25
 
 - **Hotkey paneli**: Modifier **dropdown** (Ctrl / Shift / Alt / Win ve kombinasyonları Ctrl+Shift, Ctrl+Alt, Ctrl+Win, Shift+Alt, Ctrl+Shift+Alt) + "Tuş" metin alanı (`D`, `F5`, `Tab`); ayrıca "Kısayol elle" tam kombinasyon alanı korunur (örn. `Ctrl+Shift+D`). Çözüm sırası: elle → modifier+tuş → eski kayıt değerleri.
