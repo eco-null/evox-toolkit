@@ -1,7 +1,29 @@
 import { forAction, decodeError, createLogger } from '../util.js';
+import { COLORS, createKeyPainter, icon, registerKeyFace } from '../keyimg.js';
+
+export function urlHost(value) {
+  try {
+    return new URL(String(value ?? '').trim()).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+}
+
+export function openUrlView(settings) {
+  const host = urlHost(settings?.url);
+  return {
+    label: 'URL',
+    body: icon('link', 72, 72, 40, host ? COLORS.accent : COLORS.track),
+    sub: host || 'adres girilmedi',
+    subColor: host ? COLORS.value : COLORS.label,
+    title: host || 'URL',
+  };
+}
 
 // win: windows.js katmanı (runtime ilk kullanımda tembel yükler; testler sahte verir).
-export function registerOpenUrl(client, { win, log = createLogger() }) {
+export function registerOpenUrl(client, { win, png, log = createLogger(), painter = createKeyPainter(client, { png, log }) }) {
+  registerKeyFace(client, 'open-url', { view: openUrlView, painter, log });
+
   const handler = forAction('open-url')(async (event) => {
     const id = event.context.bindingInstanceId;
     try {

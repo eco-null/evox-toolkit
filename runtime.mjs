@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { EvoxPluginClient } from '@evoxapp/plugin-sdk';
 import { createNodeProcessIpcPluginTransport } from '@evoxapp/plugin-sdk/node';
 import { createLogger } from './src/util.js';
+import { createKeyPainter } from './src/keyimg.js';
 import { registerCounter } from './src/actions/counter.js';
 import { registerWeather } from './src/actions/weather.js';
 import { registerHotkey } from './src/actions/hotkey.js';
@@ -30,11 +31,13 @@ const loadWindows = () => (windowsLayer ??= import('./src/windows.js')
 const win = Object.fromEntries(['sendCombo', 'getClipboard', 'setClipboard', 'typeText', 'openExternal']
   .map((name) => [name, async (...args) => (await loadWindows())[name](...args)]));
 
-const counter = registerCounter(client, { log });
-const weather = registerWeather(client, { log });
-registerHotkey(client, { win, log });
-registerClipboard(client, { win, log });
-registerOpenUrl(client, { win, log });
+// Tüm aksiyonlar tek çiziciyi paylaşır: tuş başına son kart hatırlanır, aynısı yeniden gönderilmez.
+const painter = createKeyPainter(client, { log });
+const counter = registerCounter(client, { log, painter });
+const weather = registerWeather(client, { log, painter });
+registerHotkey(client, { win, log, painter });
+registerClipboard(client, { win, log, painter });
+registerOpenUrl(client, { win, log, painter });
 
 let stopped = false;
 client.on('plugin.stop', () => {

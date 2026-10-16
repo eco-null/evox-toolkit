@@ -6,9 +6,10 @@ import { registerClipboard } from '../src/actions/clipboard.js';
 test('copy stores clipboard and shows preview', async () => {
   const client = makeFakeClient();
   client.getSettings = async () => ({ mode: 'copy', preview: true });
-  registerClipboard(client, { win: { getClipboard: async () => '0123456789ABCDEF', setClipboard: async () => true, sendCombo: async () => true } });
+  registerClipboard(client, { png: async (svg) => Buffer.from(svg), win: { getClipboard: async () => '0123456789ABCDEF', setClipboard: async () => true, sendCombo: async () => true } });
   await client.emit('action.keyDown', { context: { actionId: 'clipboard', bindingInstanceId: 'b1' } });
-  assert.deepEqual(client.calls.setTitle[0], ['b1', '0123456789AB…']);
+  const svg = Buffer.from(client.calls.setImage[0][1].dataBase64, 'base64').toString('utf8');
+  assert.ok(svg.includes('>0123456789ABC<') && svg.includes('>DEF<') && svg.includes('16 karakter'), svg);
   assert.equal(client.calls.showSuccess.length, 1);
 });
 

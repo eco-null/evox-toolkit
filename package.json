@@ -1,7 +1,7 @@
 {
   "name": "evox-toolkit",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "type": "module",
   "description": "evoX Toolkit — evoX T1 (trusted-node) yerel plugin: sayaç, hava, hotkey, metin, pano, URL.",
   "license": "MIT",

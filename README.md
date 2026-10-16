@@ -42,7 +42,7 @@ Kod değişikliğinden sonra Geliştirici penceresinden **yeniden yükle** kulla
 
 ## Aksiyon bazlı kurulum notları
 
-- **Hava**: Aksiyon ayarlarında **Şehir** alanı zorunludur; tuşta sıcaklık (üstte) ve nem yüzdesi (altta) büyük gösterilir. **Yenileme (dk)** alanıyla güncelleme aralığı seçilir (varsayılan 30 dk); tuş basılınca anında yenilenir.
+- **Hava**: Aksiyon ayarlarında **Şehir** alanı zorunludur. Tuşta hava ikonu (gece ay), sıcaklık, köşede nem ve altta günün en düşük / en yüksek değeri gösterilir. **Yenileme aralığı** listeden seçilir (varsayılan 30 dk); tuşa basınca anında yenilenir. Gece/gündüz bilgisayarın yerel saatine göre belirlenir.
 - **Hotkey**: Modifier **dropdown**'ından (Ctrl / Shift / Alt / Win ve komboları) seç, **Tuş** alanına basacağın tuşu yaz (`D`, `F5`, `Tab`); veya **Kısayol elle** alanına tam kombinasyon yaz (`Ctrl+Shift+D`). Host'un kendi kayıt alanından gelen değerler de otomatik denenir. Ayarlar hiç dönmüyorsa log `[hotkey] settings keys: ...` ile görünür.
 - **URL Aç**: Adres alanı zorunludur; yalnızca `http`/`https` protokolleri kabul edilir.
 

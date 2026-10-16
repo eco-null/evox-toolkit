@@ -1,13 +1,27 @@
+// Sayaç: her basış +1, uzun basış (700 ms) sıfırlar. Sayı tuş kartında büyük gösterilir.
 import { forAction, decodeError, createLogger } from '../util.js';
+import { COLORS, createKeyPainter } from '../keyimg.js';
 
 const LONG_PRESS_MS = 700;
+const MAX_COUNT = 9999;
 
-export function registerCounter(client, { log = createLogger() } = {}) {
+export function counterView(n) {
+  return {
+    label: 'SAYAÇ',
+    value: String(n),
+    valueSize: n >= 1000 ? 44 : 56,
+    valueColor: n > 0 ? COLORS.value : COLORS.label,
+    sub: 'uzun bas: sıfırla',
+    title: String(n),
+  };
+}
+
+export function registerCounter(client, { png, log = createLogger(), painter = createKeyPainter(client, { png, log }) } = {}) {
   const counts = new Map();
   const holdTimers = new Map();
 
   // Zamanlayıcıdan da çağrılır; host hatası hiçbir zaman yakalanmamış ret olarak kalmaz.
-  const show = (id, n) => client.setTitle(id, String(n)).catch((err) => {
+  const show = (id, n) => painter.paint(id, counterView(n)).catch((err) => {
     if (!decodeError(err).silent) log('counter', err);
   });
 
@@ -19,7 +33,7 @@ export function registerCounter(client, { log = createLogger() } = {}) {
   const onDown = forAction('counter')(async (event) => {
     const id = event.context.bindingInstanceId;
     cancelHold(id);
-    const n = Math.min((counts.get(id) ?? 0) + 1, 9999);
+    const n = Math.min((counts.get(id) ?? 0) + 1, MAX_COUNT);
     counts.set(id, n);
     holdTimers.set(id, setTimeout(() => {
       holdTimers.delete(id);
@@ -35,12 +49,13 @@ export function registerCounter(client, { log = createLogger() } = {}) {
 
   const onAppear = forAction('counter')(async (event) => {
     const id = event.context.bindingInstanceId;
-    const n = counts.get(id);
-    if (n != null) await show(id, n);
+    await show(id, counts.get(id) ?? 0);
   });
 
   const onGone = forAction('counter')((event) => {
-    cancelHold(event.context.bindingInstanceId);
+    const id = event.context.bindingInstanceId;
+    cancelHold(id);
+    painter.forget(id);
   });
 
   client.on('action.keyDown', onDown);

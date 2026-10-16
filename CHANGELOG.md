@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.1.0 — 2026-10-16
+
+- **Yeni tuş tasarımı**: tüm aksiyonlar evox-sysmon ile aynı 144x144 kartı kullanır. Sol üstte etiket, sağ üstte küçük bilgi, ortada büyük değer ya da ikon, altta alt satır. Çizgi ikonlar Feather Icons'tan (MIT) uyarlandı.
+- **Hava**: wttr.in JSON (`format=j1`). Hava koduna göre ikon (açık, parçalı, bulutlu, yağmur, kar, fırtına, sis), gece için ay; sıcaklık renklendirilir, köşede nem, altta günün en düşük / en yüksek değeri. Yenileme aralığı artık açılır listeden seçilir (10 dk – 2 saat).
+- **Sayaç**: sayı kartta büyük; ilk görünüşte 0 çizilir.
+- **Hotkey**: modifier satırı ve tuş kapağı. **Metin Yaz**: metin önizlemesi + yaz/yapıştır modu. **Pano**: kopyalanan metnin önizlemesi ve karakter sayısı. **URL Aç**: bağlantı ikonu + alan adı.
+- Ortak çizici, aynı kartı tekrar göndermez; görsel çizilemezse kısa metin başlığa düşer, görsel dönünce başlık temizlenir.
+
 ## v2.0.0 — 2026-10-16
 
 - **evoX 0.3.16 uyumu**: `@evoxapp/plugin-sdk` 0.2.0; manifest `sdkVersion` 0.2.0 ve runtime bu değeri manifestten okur.

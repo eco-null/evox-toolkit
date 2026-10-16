@@ -3,73 +3,78 @@ import assert from 'node:assert/strict';
 import { makeFakeClient } from './helpers/fake-client.js';
 import { registerCounter } from '../src/actions/counter.js';
 
-test('keyDown increments and writes title without showSuccess', async () => {
+const png = async (svg) => Buffer.from(svg);
+const ctx = { actionId: 'counter', bindingInstanceId: 'b1' };
+// Son kartta büyük yazılan sayı.
+const shown = (client) => {
+  const svg = Buffer.from(client.calls.setImage.at(-1)[1].dataBase64, 'base64').toString('utf8');
+  return /font-weight="700" fill="[^"]+">(\d+)</.exec(svg)?.[1];
+};
+
+test('her basış sayıyı kartta artırır, başarı işareti göstermez', async () => {
   const client = makeFakeClient();
-  registerCounter(client);
-  const ctx = { actionId: 'counter', bindingInstanceId: 'b1' };
+  registerCounter(client, { png });
   await client.emit('action.keyDown', { context: ctx });
+  assert.equal(shown(client), '1');
   await client.emit('action.keyDown', { context: ctx });
-  assert.deepEqual(client.calls.setTitle[0], ['b1', '1']);
-  assert.deepEqual(client.calls.setTitle[1], ['b1', '2']);
+  assert.equal(shown(client), '2');
   assert.equal(client.calls.showSuccess.length, 0);
   assert.equal(client.calls.showError.length, 0);
   await client.emit('action.willDisappear', { context: ctx });
 });
 
-test('ignores other actionIds', async () => {
+test('başka aksiyonları yok sayar', async () => {
   const client = makeFakeClient();
-  registerCounter(client);
+  registerCounter(client, { png });
   await client.emit('action.keyDown', { context: { actionId: 'other', bindingInstanceId: 'x' } });
-  assert.equal(client.calls.setTitle.length, 0);
+  assert.equal(client.calls.setImage.length + client.calls.setTitle.length, 0);
 });
 
-test('long press resets via hold timer', async () => {
+test('uzun basış sıfırlar', async () => {
   const client = makeFakeClient();
-  registerCounter(client);
-  const ctx = { actionId: 'counter', bindingInstanceId: 'b1' };
+  registerCounter(client, { png });
   await client.emit('action.keyDown', { context: ctx });
-  assert.equal(client.calls.setTitle.at(-1)[1], '1');
+  assert.equal(shown(client), '1');
   await new Promise((r) => setTimeout(r, 800));
-  assert.equal(client.calls.setTitle.at(-1)[1], '0');
+  assert.equal(shown(client), '0');
   await client.emit('action.keyUp', { context: ctx });
   await client.emit('action.willDisappear', { context: ctx });
 });
 
-test('quick tap does not reset', async () => {
+test('kısa basış sıfırlamaz', async () => {
   const client = makeFakeClient();
-  registerCounter(client);
-  const ctx = { actionId: 'counter', bindingInstanceId: 'b1' };
+  registerCounter(client, { png });
   await client.emit('action.keyDown', { context: ctx });
   await client.emit('action.keyUp', { context: ctx });
   await new Promise((r) => setTimeout(r, 800));
-  assert.equal(client.calls.setTitle.at(-1)[1], '1');
+  assert.equal(shown(client), '1');
   await client.emit('action.keyDown', { context: ctx });
-  assert.equal(client.calls.setTitle.at(-1)[1], '2');
+  assert.equal(shown(client), '2');
   await client.emit('action.willDisappear', { context: ctx });
 });
 
-test('host errors from setTitle never reject the handler', async () => {
+test('host hataları handler\'ı reddettirmez', async () => {
   const client = makeFakeClient();
   const logged = [];
-  client.setTitle = async () => { throw Object.assign(new Error('x'), { code: 'RATE_LIMITED' }); };
-  registerCounter(client, { log: (key) => logged.push(key) });
-  const ctx = { actionId: 'counter', bindingInstanceId: 'b1' };
+  client.setImage = async () => { throw Object.assign(new Error('x'), { code: 'RATE_LIMITED' }); };
+  registerCounter(client, { png, log: (key) => logged.push(key) });
   await client.emit('action.keyDown', { context: ctx });
   await client.emit('action.keyUp', { context: ctx });
-  client.setTitle = async () => { throw Object.assign(new Error('x'), { code: 'CONTEXT_EXPIRED' }); };
+  client.setImage = async () => { throw Object.assign(new Error('x'), { code: 'CONTEXT_EXPIRED' }); };
   await client.emit('action.keyDown', { context: ctx });
-  await new Promise((r) => setTimeout(r, 800)); // hold timer fires and its setTitle rejects too
-  assert.deepEqual(logged, ['counter']);
+  await new Promise((r) => setTimeout(r, 800)); // tutma zamanlayıcısı da çizer ve reddedilir
+  assert.deepEqual(logged, []);
 });
 
-test('willAppear restores last count', async () => {
+test('tuş yeniden görünce son sayı çizilir; ilk görünüşte 0', async () => {
   const client = makeFakeClient();
-  registerCounter(client);
-  const ctx = { actionId: 'counter', bindingInstanceId: 'b1' };
+  registerCounter(client, { png });
+  await client.emit('action.willAppear', { context: ctx });
+  assert.equal(shown(client), '0');
   await client.emit('action.keyDown', { context: ctx });
   await client.emit('action.keyDown', { context: ctx });
   await client.emit('action.willDisappear', { context: ctx });
   await client.emit('action.willAppear', { context: ctx });
-  assert.deepEqual(client.calls.setTitle.at(-1), ['b1', '2']);
+  assert.equal(shown(client), '2');
   await client.emit('action.willDisappear', { context: ctx });
 });
